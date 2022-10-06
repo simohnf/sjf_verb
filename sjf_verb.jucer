@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="QKo0eo" name="sjf_verb" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              companyWebsite="sjf">
   <MAINGROUP id="eiPGLS" name="sjf_verb">
     <GROUP id="{BCFA9A7E-307F-AA40-0015-B88FA608841E}" name="Source">
       <FILE id="WLYZzj" name="PluginProcessor.cpp" compile="1" resource="0"
