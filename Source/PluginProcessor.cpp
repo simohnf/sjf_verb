@@ -21,7 +21,22 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
                      #endif
                        )
 #endif
+, parameters( *this, nullptr, juce::Identifier("sjf_verb"),
+             {
+                 std::make_unique<juce::AudioParameterFloat> ("dry", "Dry", 0.0f, 100.0f, 100.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("wet", "Wet", 0.0f, 100.0f, 80.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("modulation", "Modulation", 0.0f, 100.0f, 50.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("size", "Size", 0.0f, 100.0f, 80.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("decay", "Decay", 0.0f, 100.0f, 80.0f)
+             })
 {
+    rev.intialise( getSampleRate(), getTotalNumInputChannels(), getTotalNumOutputChannels(), getBlockSize() );
+    
+    dryParameter = parameters.getRawParameterValue("dry");
+    wetParameter = parameters.getRawParameterValue("wet");
+    sizeParameter = parameters.getRawParameterValue("size");
+    modulationParameter = parameters.getRawParameterValue("modulation");
+    decayParameter = parameters.getRawParameterValue("decay");
 }
 
 Sjf_verbAudioProcessor::~Sjf_verbAudioProcessor()
@@ -138,6 +153,10 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     {
         buffer.clear (i, 0, buffer.getNumSamples());
     }
+    
+    rev.setSize( *sizeParameter );
+    rev.setModulation( *modulationParameter );
+    rev.setDecay( *decayParameter );
     rev.processAudio( buffer );
 }
 
@@ -149,7 +168,7 @@ bool Sjf_verbAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* Sjf_verbAudioProcessor::createEditor()
 {
-    return new Sjf_verbAudioProcessorEditor (*this);
+    return new Sjf_verbAudioProcessorEditor (*this, parameters);
 }
 
 //==============================================================================

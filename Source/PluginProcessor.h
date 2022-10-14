@@ -9,7 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_reverb.h"
+#include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_reverb.h" 
 
 //==============================================================================
 /**
@@ -58,6 +58,14 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
 private:
+    juce::AudioProcessorValueTreeState parameters;
+    
+    std::atomic<float>* dryParameter = nullptr;
+    std::atomic<float>* wetParameter = nullptr;
+    std::atomic<float>* sizeParameter = nullptr;
+    std::atomic<float>* modulationParameter = nullptr;
+    std::atomic<float>* decayParameter = nullptr;
+    
     
     sjf_reverb rev;
     //==============================================================================
