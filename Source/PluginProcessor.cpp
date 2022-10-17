@@ -23,8 +23,7 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
 #endif
 , parameters( *this, nullptr, juce::Identifier("sjf_verb"),
              {
-                 std::make_unique<juce::AudioParameterFloat> ("dry", "Dry", 0.0f, 100.0f, 100.0f),
-                 std::make_unique<juce::AudioParameterFloat> ("wet", "Wet", 0.0f, 100.0f, 80.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("mix", "Mix", 0.0f, 100.0f, 100.0f),
                  std::make_unique<juce::AudioParameterFloat> ("modulation", "Modulation", 0.0f, 100.0f, 50.0f),
                  std::make_unique<juce::AudioParameterFloat> ("size", "Size", 0.0f, 100.0f, 80.0f),
                  std::make_unique<juce::AudioParameterFloat> ("decay", "Decay", 0.0f, 100.0f, 80.0f)
@@ -32,8 +31,7 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
 {
     rev.intialise( getSampleRate(), getTotalNumInputChannels(), getTotalNumOutputChannels(), getBlockSize() );
     
-    dryParameter = parameters.getRawParameterValue("dry");
-    wetParameter = parameters.getRawParameterValue("wet");
+    mixParameter = parameters.getRawParameterValue("mix");
     sizeParameter = parameters.getRawParameterValue("size");
     modulationParameter = parameters.getRawParameterValue("modulation");
     decayParameter = parameters.getRawParameterValue("decay");
@@ -157,6 +155,7 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     rev.setSize( *sizeParameter );
     rev.setModulation( *modulationParameter );
     rev.setDecay( *decayParameter );
+    rev.setMix( *mixParameter );
     rev.processAudio( buffer );
 }
 

@@ -22,21 +22,15 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     setLookAndFeel( &otherLookandFeel );
     
     
-//    drySliderAttachment, wetSliderAttachment, sizeSliderAttachment, modulationSliderAttachment, decaySliderAttachment;
+//    mixSliderAttachment, wetSliderAttachment, sizeSliderAttachment, modulationSliderAttachment, decaySliderAttachment;
     
-    drySliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "dry", drySlider));
-    addAndMakeVisible( &drySlider );
-    drySlider.setSliderStyle (juce::Slider::Rotary);
-    drySlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
-    drySlider.setNumDecimalPlacesToDisplay(3);
-    drySlider.setTextValueSuffix ("%");
+    mixSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "mix", mixSlider));
+    addAndMakeVisible( &mixSlider );
+    mixSlider.setSliderStyle (juce::Slider::Rotary);
+    mixSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    mixSlider.setNumDecimalPlacesToDisplay(3);
+    mixSlider.setTextValueSuffix ("%");
     
-    wetSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "wet", wetSlider));
-    addAndMakeVisible( &wetSlider );
-    wetSlider.setSliderStyle (juce::Slider::Rotary);
-    wetSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
-    wetSlider.setNumDecimalPlacesToDisplay(3);
-    wetSlider.setTextValueSuffix ("%");
     
     sizeSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "size", sizeSlider));
     addAndMakeVisible( &sizeSlider );
@@ -83,4 +77,5 @@ void Sjf_verbAudioProcessorEditor::resized()
     sizeSlider.setBounds( indent, textHeight, potSize, potSize );
     modulationSlider.setBounds( indent, sizeSlider.getBottom(), potSize, potSize );
     decaySlider.setBounds( indent, modulationSlider.getBottom(), potSize, potSize );
+    mixSlider.setBounds( sizeSlider.getRight(), sizeSlider.getY(), potSize, potSize );
 }

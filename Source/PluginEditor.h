@@ -31,10 +31,10 @@ private:
     juce::AudioProcessorValueTreeState& valueTreeState;
     sjf_lookAndFeel otherLookandFeel; 
     
-    juce::Slider drySlider, wetSlider, sizeSlider, modulationSlider, decaySlider;
+    juce::Slider mixSlider, sizeSlider, modulationSlider, decaySlider;
     
     
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> drySliderAttachment, wetSliderAttachment, sizeSliderAttachment, modulationSliderAttachment, decaySliderAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixSliderAttachment, sizeSliderAttachment, modulationSliderAttachment, decaySliderAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ( Sjf_verbAudioProcessorEditor )
 };

@@ -60,8 +60,7 @@ public:
 private:
     juce::AudioProcessorValueTreeState parameters;
     
-    std::atomic<float>* dryParameter = nullptr;
-    std::atomic<float>* wetParameter = nullptr;
+    std::atomic<float>* mixParameter = nullptr;
     std::atomic<float>* sizeParameter = nullptr;
     std::atomic<float>* modulationParameter = nullptr;
     std::atomic<float>* decayParameter = nullptr;
