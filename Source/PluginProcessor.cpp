@@ -35,6 +35,13 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
     sizeParameter = parameters.getRawParameterValue("size");
     modulationParameter = parameters.getRawParameterValue("modulation");
     decayParameter = parameters.getRawParameterValue("decay");
+    
+    
+    
+    rev.setSize( *sizeParameter );
+    rev.setModulation( *modulationParameter );
+    rev.setDecay( *decayParameter );
+    rev.setMix( *mixParameter );
 }
 
 Sjf_verbAudioProcessor::~Sjf_verbAudioProcessor()
@@ -107,6 +114,11 @@ void Sjf_verbAudioProcessor::changeProgramName (int index, const juce::String& n
 void Sjf_verbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
     rev.intialise( sampleRate, getTotalNumInputChannels(), getTotalNumOutputChannels(), samplesPerBlock);
+    
+    rev.setSize( *sizeParameter );
+    rev.setModulation( *modulationParameter );
+    rev.setDecay( *decayParameter );
+    rev.setMix( *mixParameter );
 }
 
 void Sjf_verbAudioProcessor::releaseResources()
