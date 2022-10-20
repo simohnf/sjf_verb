@@ -57,6 +57,7 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
+    void setParameters();
 private:
     juce::AudioProcessorValueTreeState parameters;
     
@@ -64,6 +65,8 @@ private:
     std::atomic<float>* sizeParameter = nullptr;
     std::atomic<float>* modulationParameter = nullptr;
     std::atomic<float>* decayParameter = nullptr;
+    std::atomic<float>* lrCutoffParameter = nullptr;
+    std::atomic<float>* erCutoffParameter = nullptr;
     
     
     sjf_reverb rev;

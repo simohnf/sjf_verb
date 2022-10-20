@@ -53,6 +53,18 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     decaySlider.setNumDecimalPlacesToDisplay(3);
     decaySlider.setTextValueSuffix ("%");
     
+    lrCutOffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "lrCutOff", lrCutOffSlider));
+    addAndMakeVisible( &lrCutOffSlider );
+    lrCutOffSlider.setSliderStyle (juce::Slider::Rotary);
+    lrCutOffSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    lrCutOffSlider.setNumDecimalPlacesToDisplay(3);
+    
+    erCutOffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "erCutOff", erCutOffSlider));
+    addAndMakeVisible( &erCutOffSlider );
+    erCutOffSlider.setSliderStyle (juce::Slider::Rotary);
+    erCutOffSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    erCutOffSlider.setNumDecimalPlacesToDisplay(3);
+    
     setSize (400, 300);
 }
 
@@ -78,4 +90,6 @@ void Sjf_verbAudioProcessorEditor::resized()
     modulationSlider.setBounds( indent, sizeSlider.getBottom(), potSize, potSize );
     decaySlider.setBounds( indent, modulationSlider.getBottom(), potSize, potSize );
     mixSlider.setBounds( sizeSlider.getRight(), sizeSlider.getY(), potSize, potSize );
+    lrCutOffSlider.setBounds( mixSlider.getX(), mixSlider.getBottom(), potSize, potSize );
+    erCutOffSlider.setBounds( lrCutOffSlider.getX(), lrCutOffSlider.getBottom(), potSize, potSize );
 }

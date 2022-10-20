@@ -26,7 +26,9 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
                  std::make_unique<juce::AudioParameterFloat> ("mix", "Mix", 0.0f, 100.0f, 100.0f),
                  std::make_unique<juce::AudioParameterFloat> ("modulation", "Modulation", 0.0f, 100.0f, 50.0f),
                  std::make_unique<juce::AudioParameterFloat> ("size", "Size", 0.0f, 100.0f, 80.0f),
-                 std::make_unique<juce::AudioParameterFloat> ("decay", "Decay", 0.0f, 100.0f, 80.0f)
+                 std::make_unique<juce::AudioParameterFloat> ("decay", "Decay", 0.0f, 100.0f, 80.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("lrCutOff", "LrCutOff", 0.0f, 1.0f, 0.8f),
+                 std::make_unique<juce::AudioParameterFloat> ("erCutOff", "ErCutOff", 0.0f, 1.0f, 0.8f)
              })
 {
     rev.intialise( getSampleRate(), getTotalNumInputChannels(), getTotalNumOutputChannels(), getBlockSize() );
@@ -35,13 +37,12 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
     sizeParameter = parameters.getRawParameterValue("size");
     modulationParameter = parameters.getRawParameterValue("modulation");
     decayParameter = parameters.getRawParameterValue("decay");
+    lrCutoffParameter = parameters.getRawParameterValue("lrCutOff");
+    erCutoffParameter = parameters.getRawParameterValue("erCutOff");
     
     
     
-    rev.setSize( *sizeParameter );
-    rev.setModulation( *modulationParameter );
-    rev.setDecay( *decayParameter );
-    rev.setMix( *mixParameter );
+    setParameters();
 }
 
 Sjf_verbAudioProcessor::~Sjf_verbAudioProcessor()
@@ -115,10 +116,7 @@ void Sjf_verbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     rev.intialise( sampleRate, getTotalNumInputChannels(), getTotalNumOutputChannels(), samplesPerBlock);
     
-    rev.setSize( *sizeParameter );
-    rev.setModulation( *modulationParameter );
-    rev.setDecay( *decayParameter );
-    rev.setMix( *mixParameter );
+    setParameters();
 }
 
 void Sjf_verbAudioProcessor::releaseResources()
@@ -164,10 +162,7 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
         buffer.clear (i, 0, buffer.getNumSamples());
     }
     
-    rev.setSize( *sizeParameter );
-    rev.setModulation( *modulationParameter );
-    rev.setDecay( *decayParameter );
-    rev.setMix( *mixParameter );
+    setParameters();
     rev.processAudio( buffer );
 }
 
@@ -195,10 +190,21 @@ void Sjf_verbAudioProcessor::setStateInformation (const void* data, int sizeInBy
     // You should use this method to restore your parameters from this memory block,
     // whose contents will have been created by the getStateInformation() call.
 }
-
+//==============================================================================
+void Sjf_verbAudioProcessor::setParameters()
+{
+    rev.setSize( *sizeParameter );
+    rev.setModulation( *modulationParameter );
+    rev.setDecay( *decayParameter );
+    rev.setMix( *mixParameter );
+    rev.setLrCutOff( *lrCutoffParameter );
+    rev.setErCutOff( *erCutoffParameter );
+}
 //==============================================================================
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new Sjf_verbAudioProcessor();
 }
+
+
