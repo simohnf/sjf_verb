@@ -67,6 +67,10 @@ private:
     std::atomic<float>* decayParameter = nullptr;
     std::atomic<float>* lrCutoffParameter = nullptr;
     std::atomic<float>* erCutoffParameter = nullptr;
+    std::atomic<float>* shimmerLevelParameter = nullptr;
+    std::atomic<float>* shimmerTranspositionParameter = nullptr;
+    std::atomic<float>* interpolationTypeParameter = nullptr;
+    std::atomic<float>* feedbackControlParameter = nullptr;
     
     
     sjf_reverb rev;

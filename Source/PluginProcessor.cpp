@@ -28,7 +28,11 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
                  std::make_unique<juce::AudioParameterFloat> ("size", "Size", 0.0f, 100.0f, 80.0f),
                  std::make_unique<juce::AudioParameterFloat> ("decay", "Decay", 0.0f, 100.0f, 80.0f),
                  std::make_unique<juce::AudioParameterFloat> ("lrCutOff", "LrCutOff", 0.0f, 1.0f, 0.8f),
-                 std::make_unique<juce::AudioParameterFloat> ("erCutOff", "ErCutOff", 0.0f, 1.0f, 0.8f)
+                 std::make_unique<juce::AudioParameterFloat> ("erCutOff", "ErCutOff", 0.0f, 1.0f, 0.8f),
+                 std::make_unique<juce::AudioParameterFloat> ("shimmerLevel", "ShimmerLevel", 0.0f, 100.0f, 30.0f),
+                 std::make_unique<juce::AudioParameterFloat> ("shimmerTransposition", "ShimmerTransposition", -12.0f, 12.0f, 12.0f),
+                 std::make_unique<juce::AudioParameterInt> ("interpolationType", "InterpolationType", 1, 6, 1),
+                 std::make_unique<juce::AudioParameterBool> ("feedbackControl", "feedbackControl", false)
              })
 {
     rev.intialise( getSampleRate(), getTotalNumInputChannels(), getTotalNumOutputChannels(), getBlockSize() );
@@ -39,8 +43,10 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
     decayParameter = parameters.getRawParameterValue("decay");
     lrCutoffParameter = parameters.getRawParameterValue("lrCutOff");
     erCutoffParameter = parameters.getRawParameterValue("erCutOff");
-    
-    
+    shimmerLevelParameter = parameters.getRawParameterValue("shimmerLevel");
+    shimmerTranspositionParameter = parameters.getRawParameterValue("shimmerTransposition");
+    interpolationTypeParameter = parameters.getRawParameterValue("interpolationType");
+    feedbackControlParameter = parameters.getRawParameterValue("feedbackControl");
     
     setParameters();
 }
@@ -199,6 +205,9 @@ void Sjf_verbAudioProcessor::setParameters()
     rev.setMix( *mixParameter );
     rev.setLrCutOff( *lrCutoffParameter );
     rev.setErCutOff( *erCutoffParameter );
+    rev.setShimmer( *shimmerLevelParameter, *shimmerTranspositionParameter );
+    rev.setInterpolationType( *interpolationTypeParameter );
+    rev.setFeedbackControl( *feedbackControlParameter ); 
 }
 //==============================================================================
 // This creates new instances of the plugin..

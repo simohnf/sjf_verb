@@ -65,6 +65,38 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     erCutOffSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
     erCutOffSlider.setNumDecimalPlacesToDisplay(3);
     
+    shimLevelSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "shimmerLevel", shimLevelSlider));
+    addAndMakeVisible( &shimLevelSlider );
+    shimLevelSlider.setSliderStyle (juce::Slider::Rotary);
+    shimLevelSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    shimLevelSlider.setNumDecimalPlacesToDisplay(3);
+    shimLevelSlider.setTextValueSuffix ("%");
+    
+    shimTranspositionSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "shimmerTransposition", shimTranspositionSlider));
+    addAndMakeVisible( &shimTranspositionSlider );
+    shimTranspositionSlider.setSliderStyle (juce::Slider::Rotary);
+    shimTranspositionSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    shimTranspositionSlider.setNumDecimalPlacesToDisplay(3);
+    shimTranspositionSlider.setTextValueSuffix ("st");
+    
+    
+    interpolationTypeBoxAttachment.reset (new juce::AudioProcessorValueTreeState::ComboBoxAttachment (valueTreeState, "interpolationType", interpolationTypeBox));
+    addAndMakeVisible( &interpolationTypeBox );
+    interpolationTypeBox.addItem( "linear", 1 );
+    interpolationTypeBox.addItem( "cubic", 2 );
+    interpolationTypeBox.addItem( "PD", 3 );
+    interpolationTypeBox.addItem( "4th Order", 4 );
+    interpolationTypeBox.addItem( "Godot", 5 );
+    interpolationTypeBox.addItem( "Hermite", 6 );
+    interpolationTypeBox.setSelectedId( 1 );
+    
+    
+    fbControlButtonAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, "feedbackControl", fbControlButton ));
+    addAndMakeVisible( &fbControlButton );
+    fbControlButton.setButtonText( "fb control" );
+    
+    
+    
     setSize (400, 300);
 }
 
@@ -89,7 +121,14 @@ void Sjf_verbAudioProcessorEditor::resized()
     sizeSlider.setBounds( indent, textHeight, potSize, potSize );
     modulationSlider.setBounds( indent, sizeSlider.getBottom(), potSize, potSize );
     decaySlider.setBounds( indent, modulationSlider.getBottom(), potSize, potSize );
-    mixSlider.setBounds( sizeSlider.getRight(), sizeSlider.getY(), potSize, potSize );
+    fbControlButton.setBounds( indent, decaySlider.getBottom(), potSize, textHeight );
+    
+    mixSlider.setBounds( sizeSlider.getRight(), textHeight, potSize, potSize );
     lrCutOffSlider.setBounds( mixSlider.getX(), mixSlider.getBottom(), potSize, potSize );
     erCutOffSlider.setBounds( lrCutOffSlider.getX(), lrCutOffSlider.getBottom(), potSize, potSize );
+    
+    shimLevelSlider.setBounds( lrCutOffSlider.getRight(), textHeight, potSize, potSize );
+    shimTranspositionSlider.setBounds( shimLevelSlider.getX(), shimLevelSlider.getBottom(), potSize, potSize );
+    
+    interpolationTypeBox.setBounds( getWidth() - indent - potSize, getHeight() - textHeight, potSize, textHeight );
 }
