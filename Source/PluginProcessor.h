@@ -9,7 +9,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_reverb.h" 
+//#include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_reverb.h"
+#include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_zitaRev.h"
+#include "/Users/simonfay/Programming_Stuff/sjf_audio/sjf_audioUtilities.h"
 
 //==============================================================================
 /**
@@ -58,12 +60,15 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     void setParameters();
+    
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
 private:
     juce::AudioProcessorValueTreeState parameters;
     
     std::atomic<float>* mixParameter = nullptr;
     std::atomic<float>* sizeParameter = nullptr;
-    std::atomic<float>* modulationParameter = nullptr;
+    std::atomic<float>* modulationRateParameter = nullptr;
+    std::atomic<float>* modulationDepthParameter = nullptr;
     std::atomic<float>* decayParameter = nullptr;
     std::atomic<float>* lrCutoffParameter = nullptr;
     std::atomic<float>* erCutoffParameter = nullptr;
@@ -73,7 +78,8 @@ private:
     std::atomic<float>* feedbackControlParameter = nullptr;
     
     
-    sjf_reverb rev;
+//    sjf_reverb< float, 8, 4 > rev;
+    sjf_zitaRev< float > rev;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_verbAudioProcessor)
 };

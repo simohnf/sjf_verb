@@ -22,7 +22,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     setLookAndFeel( &otherLookandFeel );
     
     
-//    mixSliderAttachment, wetSliderAttachment, sizeSliderAttachment, modulationSliderAttachment, decaySliderAttachment;
+//    mixSliderAttachment, wetSliderAttachment, sizeSliderAttachment, modulationDepthSliderAttachment, decaySliderAttachment;
     
     mixSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "mix", mixSlider));
     addAndMakeVisible( &mixSlider );
@@ -39,12 +39,19 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     sizeSlider.setNumDecimalPlacesToDisplay(3);
     sizeSlider.setTextValueSuffix ("%");
     
-    modulationSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "modulation", modulationSlider));
-    addAndMakeVisible( &modulationSlider );
-    modulationSlider.setSliderStyle (juce::Slider::Rotary);
-    modulationSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
-    modulationSlider.setNumDecimalPlacesToDisplay(3);
-    modulationSlider.setTextValueSuffix ("%");
+    modulationRateSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "modulationRate", modulationRateSlider));
+    addAndMakeVisible( &modulationRateSlider );
+    modulationRateSlider.setSliderStyle (juce::Slider::Rotary);
+    modulationRateSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    modulationRateSlider.setNumDecimalPlacesToDisplay(3);
+    modulationRateSlider.setTextValueSuffix ("Hz");
+    
+    modulationDepthSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "modulationDepth", modulationDepthSlider));
+    addAndMakeVisible( &modulationDepthSlider );
+    modulationDepthSlider.setSliderStyle (juce::Slider::Rotary);
+    modulationDepthSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    modulationDepthSlider.setNumDecimalPlacesToDisplay(3);
+    modulationDepthSlider.setTextValueSuffix ("%");
     
     decaySliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "decay", decaySlider));
     addAndMakeVisible( &decaySlider );
@@ -58,12 +65,14 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     lrCutOffSlider.setSliderStyle (juce::Slider::Rotary);
     lrCutOffSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
     lrCutOffSlider.setNumDecimalPlacesToDisplay(3);
+    lrCutOffSlider.setTextValueSuffix("Hz");
     
     erCutOffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "erCutOff", erCutOffSlider));
     addAndMakeVisible( &erCutOffSlider );
     erCutOffSlider.setSliderStyle (juce::Slider::Rotary);
     erCutOffSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
     erCutOffSlider.setNumDecimalPlacesToDisplay(3);
+    erCutOffSlider.setTextValueSuffix("Hz");
     
     shimLevelSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "shimmerLevel", shimLevelSlider));
     addAndMakeVisible( &shimLevelSlider );
@@ -97,7 +106,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     
     
     
-    setSize (400, 300);
+    setSize (400, 400);
 }
 
 Sjf_verbAudioProcessorEditor::~Sjf_verbAudioProcessorEditor()
@@ -113,14 +122,15 @@ void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("Hello World!", getLocalBounds(), juce::Justification::centred, 1);
+    g.drawFittedText ("sjf_verb", getLocalBounds(), juce::Justification::centred, 1);
 }
 
 void Sjf_verbAudioProcessorEditor::resized()
 {
     sizeSlider.setBounds( indent, textHeight, potSize, potSize );
-    modulationSlider.setBounds( indent, sizeSlider.getBottom(), potSize, potSize );
-    decaySlider.setBounds( indent, modulationSlider.getBottom(), potSize, potSize );
+    modulationRateSlider.setBounds( indent, sizeSlider.getBottom(), potSize, potSize );
+    modulationDepthSlider.setBounds( indent, modulationRateSlider.getBottom(), potSize, potSize );
+    decaySlider.setBounds( indent, modulationDepthSlider.getBottom(), potSize, potSize );
     fbControlButton.setBounds( indent, decaySlider.getBottom(), potSize, textHeight );
     
     mixSlider.setBounds( sizeSlider.getRight(), textHeight, potSize, potSize );
