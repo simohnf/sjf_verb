@@ -66,9 +66,11 @@ private:
     juce::AudioProcessorValueTreeState parameters;
     
     std::atomic<float>* mixParameter = nullptr;
+    std::atomic<float>* preDelayParameter = nullptr;
     std::atomic<float>* sizeParameter = nullptr;
     std::atomic<float>* modulationRateParameter = nullptr;
     std::atomic<float>* modulationDepthParameter = nullptr;
+    std::atomic<float>* modulationTypeParameter = nullptr;
     std::atomic<float>* decayParameter = nullptr;
     std::atomic<float>* lrCutoffParameter = nullptr;
     std::atomic<float>* erCutoffParameter = nullptr;
@@ -76,6 +78,7 @@ private:
     std::atomic<float>* shimmerTranspositionParameter = nullptr;
     std::atomic<float>* interpolationTypeParameter = nullptr;
     std::atomic<float>* feedbackControlParameter = nullptr;
+    
     
     
 //    sjf_reverb< float, 8, 4 > rev;

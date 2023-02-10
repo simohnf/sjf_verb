@@ -21,9 +21,6 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     
     setLookAndFeel( &otherLookandFeel );
     
-    
-//    mixSliderAttachment, wetSliderAttachment, sizeSliderAttachment, modulationDepthSliderAttachment, decaySliderAttachment;
-    
     mixSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "mix", mixSlider));
     addAndMakeVisible( &mixSlider );
     mixSlider.setSliderStyle (juce::Slider::Rotary);
@@ -31,6 +28,12 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     mixSlider.setNumDecimalPlacesToDisplay(3);
     mixSlider.setTextValueSuffix ("%");
     
+    preDelaySliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "preDelay", preDelaySlider));
+    addAndMakeVisible( &preDelaySlider );
+    preDelaySlider.setSliderStyle (juce::Slider::Rotary);
+    preDelaySlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    preDelaySlider.setNumDecimalPlacesToDisplay(3);
+    preDelaySlider.setTextValueSuffix ("ms");
     
     sizeSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "size", sizeSlider));
     addAndMakeVisible( &sizeSlider );
@@ -52,6 +55,22 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     modulationDepthSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
     modulationDepthSlider.setNumDecimalPlacesToDisplay(3);
     modulationDepthSlider.setTextValueSuffix ("%");
+    
+    modulationTypeButtonAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, "modulationType", modulationTypeButton ));
+    addAndMakeVisible( &modulationTypeButton );
+    modulationTypeButton.setButtonText( "sine mod" );
+    modulationTypeButton.onStateChange  = [ this ]
+    {
+        if ( modulationTypeButton.getToggleState() )
+        {
+            modulationTypeButton.setButtonText( "rand mod" );
+        }
+        else
+        {
+            modulationTypeButton.setButtonText( "sine mod" );
+        }
+    };
+    
     
     decaySliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "decay", decaySlider));
     addAndMakeVisible( &decaySlider );
@@ -89,7 +108,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     shimTranspositionSlider.setTextValueSuffix ("st");
     
     
-    interpolationTypeBoxAttachment.reset (new juce::AudioProcessorValueTreeState::ComboBoxAttachment (valueTreeState, "interpolationType", interpolationTypeBox));
+    
     addAndMakeVisible( &interpolationTypeBox );
     interpolationTypeBox.addItem( "linear", 1 );
     interpolationTypeBox.addItem( "cubic", 2 );
@@ -97,7 +116,8 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     interpolationTypeBox.addItem( "4th Order", 4 );
     interpolationTypeBox.addItem( "Godot", 5 );
     interpolationTypeBox.addItem( "Hermite", 6 );
-    interpolationTypeBox.setSelectedId( 1 );
+    interpolationTypeBoxAttachment.reset (new juce::AudioProcessorValueTreeState::ComboBoxAttachment (valueTreeState, "interpolationType", interpolationTypeBox));
+//    interpolationTypeBox.setSelectedId( 1 );
     
     
     fbControlButtonAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, "feedbackControl", fbControlButton ));
@@ -106,7 +126,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     
     
     
-    setSize (400, 400);
+    setSize ( 6* potSize + indent*2, 3 * potSize );
 }
 
 Sjf_verbAudioProcessorEditor::~Sjf_verbAudioProcessorEditor()
@@ -122,23 +142,31 @@ void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
 
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
-    g.drawFittedText ("sjf_verb", getLocalBounds(), juce::Justification::centred, 1);
+    g.drawFittedText ("sjf_verb", 0, 0, getWidth(), textHeight, juce::Justification::centred, 1);
 }
 
 void Sjf_verbAudioProcessorEditor::resized()
 {
-    sizeSlider.setBounds( indent, textHeight, potSize, potSize );
-    modulationRateSlider.setBounds( indent, sizeSlider.getBottom(), potSize, potSize );
-    modulationDepthSlider.setBounds( indent, modulationRateSlider.getBottom(), potSize, potSize );
-    decaySlider.setBounds( indent, modulationDepthSlider.getBottom(), potSize, potSize );
-    fbControlButton.setBounds( indent, decaySlider.getBottom(), potSize, textHeight );
+    float top = textHeight;
+    preDelaySlider.setBounds( indent, top, potSize, potSize );
+    erCutOffSlider.setBounds( preDelaySlider.getX(), preDelaySlider.getBottom(), potSize, potSize );
     
-    mixSlider.setBounds( sizeSlider.getRight(), textHeight, potSize, potSize );
-    lrCutOffSlider.setBounds( mixSlider.getX(), mixSlider.getBottom(), potSize, potSize );
-    erCutOffSlider.setBounds( lrCutOffSlider.getX(), lrCutOffSlider.getBottom(), potSize, potSize );
+    sizeSlider.setBounds( preDelaySlider.getRight(), top, potSize, potSize );
+    decaySlider.setBounds( sizeSlider.getX(), sizeSlider.getBottom(), potSize, potSize );
+    fbControlButton.setBounds( decaySlider.getX(), decaySlider.getBottom(), potSize, textHeight );
     
-    shimLevelSlider.setBounds( lrCutOffSlider.getRight(), textHeight, potSize, potSize );
+    lrCutOffSlider.setBounds( sizeSlider.getRight(), top, potSize, potSize );
+    
+    modulationRateSlider.setBounds( lrCutOffSlider.getRight(), top, potSize, potSize );
+    modulationDepthSlider.setBounds( modulationRateSlider.getX(), modulationRateSlider.getBottom(), potSize, potSize );
+    modulationTypeButton.setBounds( modulationDepthSlider.getX(), modulationDepthSlider.getBottom(), potSize, textHeight );
+    
+    shimLevelSlider.setBounds( modulationRateSlider.getRight(), top, potSize, potSize );
     shimTranspositionSlider.setBounds( shimLevelSlider.getX(), shimLevelSlider.getBottom(), potSize, potSize );
+    
+    mixSlider.setBounds( shimLevelSlider.getRight(), top, potSize, potSize );
+    
+    
     
     interpolationTypeBox.setBounds( getWidth() - indent - potSize, getHeight() - textHeight, potSize, textHeight );
 }

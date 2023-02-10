@@ -31,14 +31,14 @@ private:
     juce::AudioProcessorValueTreeState& valueTreeState;
     sjf_lookAndFeel otherLookandFeel; 
     
-    juce::Slider mixSlider, sizeSlider, modulationRateSlider, modulationDepthSlider, decaySlider, lrCutOffSlider, erCutOffSlider, shimLevelSlider, shimTranspositionSlider;
+    juce::Slider mixSlider, preDelaySlider, sizeSlider, modulationRateSlider, modulationDepthSlider, decaySlider, lrCutOffSlider, erCutOffSlider, shimLevelSlider, shimTranspositionSlider;
     juce::ComboBox interpolationTypeBox;
-    juce::ToggleButton fbControlButton;
+    juce::ToggleButton fbControlButton, modulationTypeButton;
 
     
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixSliderAttachment, sizeSliderAttachment, modulationRateSliderAttachment, modulationDepthSliderAttachment, decaySliderAttachment, lrCutOffSliderAttachment, erCutOffSliderAttachment, shimLevelSliderAttachment, shimTranspositionSliderAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixSliderAttachment, preDelaySliderAttachment, sizeSliderAttachment, modulationRateSliderAttachment, modulationDepthSliderAttachment, decaySliderAttachment, lrCutOffSliderAttachment, erCutOffSliderAttachment, shimLevelSliderAttachment, shimTranspositionSliderAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> interpolationTypeBoxAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> fbControlButtonAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> fbControlButtonAttachment, modulationTypeButtonAttachment;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ( Sjf_verbAudioProcessorEditor )
 };
