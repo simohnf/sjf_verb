@@ -35,6 +35,10 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     preDelaySlider.setNumDecimalPlacesToDisplay(3);
     preDelaySlider.setTextValueSuffix ("ms");
     
+    reverseButtonAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, "reverse", reverseButton ));
+    addAndMakeVisible( &reverseButton );
+    reverseButton.setButtonText( "reverse" );
+    
     sizeSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "size", sizeSlider));
     addAndMakeVisible( &sizeSlider );
     sizeSlider.setSliderStyle (juce::Slider::Rotary);
@@ -79,12 +83,19 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     decaySlider.setNumDecimalPlacesToDisplay(3);
     decaySlider.setTextValueSuffix ("%");
     
-    lrCutOffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "lrCutOff", lrCutOffSlider));
-    addAndMakeVisible( &lrCutOffSlider );
-    lrCutOffSlider.setSliderStyle (juce::Slider::Rotary);
-    lrCutOffSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
-    lrCutOffSlider.setNumDecimalPlacesToDisplay(3);
-    lrCutOffSlider.setTextValueSuffix("Hz");
+    lrHPFCutOffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "lrHPFCutOff", lrHPFCutOffSlider));
+    addAndMakeVisible( &lrHPFCutOffSlider );
+    lrHPFCutOffSlider.setSliderStyle (juce::Slider::Rotary);
+    lrHPFCutOffSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    lrHPFCutOffSlider.setNumDecimalPlacesToDisplay(3);
+    lrHPFCutOffSlider.setTextValueSuffix("Hz");
+    
+    lrLPFCutOffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "lrLPFCutOff", lrLPFCutOffSlider));
+    addAndMakeVisible( &lrLPFCutOffSlider );
+    lrLPFCutOffSlider.setSliderStyle (juce::Slider::Rotary);
+    lrLPFCutOffSlider.setTextBoxStyle (juce::Slider::TextBoxBelow, false, potSize, textHeight);
+    lrLPFCutOffSlider.setNumDecimalPlacesToDisplay(3);
+    lrLPFCutOffSlider.setTextValueSuffix("Hz");
     
     erCutOffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "erCutOff", erCutOffSlider));
     addAndMakeVisible( &erCutOffSlider );
@@ -126,7 +137,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     
     
     
-    setSize ( 6* potSize + indent*2, 3 * potSize );
+    setSize ( 6*potSize + indent*7, 4*potSize );
 }
 
 Sjf_verbAudioProcessorEditor::~Sjf_verbAudioProcessorEditor()
@@ -143,28 +154,46 @@ void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
     g.setColour (juce::Colours::white);
     g.setFont (15.0f);
     g.drawFittedText ("sjf_verb", 0, 0, getWidth(), textHeight, juce::Justification::centred, 1);
+    
+    g.drawFittedText ("Input LPF", erCutOffSlider.getX(), erCutOffSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("Predelay", preDelaySlider.getX(), preDelaySlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("Size", sizeSlider.getX(), sizeSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("Decay", decaySlider.getX(), decaySlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("HPF", lrHPFCutOffSlider.getX(), lrHPFCutOffSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("LPF", lrLPFCutOffSlider.getX(), lrLPFCutOffSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("Mod Rate", modulationRateSlider.getX(), modulationRateSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("Mod Depth", modulationDepthSlider.getX(), modulationDepthSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("Shimmer", shimLevelSlider.getX(), shimLevelSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("Pitch", shimTranspositionSlider.getX(), shimTranspositionSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
+    g.drawFittedText ("Mix", mixSlider.getX(), mixSlider.getY() - textHeight, potSize, textHeight, juce::Justification::centred, 1);
 }
 
 void Sjf_verbAudioProcessorEditor::resized()
 {
-    float top = textHeight;
-    preDelaySlider.setBounds( indent, top, potSize, potSize );
-    erCutOffSlider.setBounds( preDelaySlider.getX(), preDelaySlider.getBottom(), potSize, potSize );
+    float top = textHeight * 2;
+    float spacing = (1.0*textHeight);
     
-    sizeSlider.setBounds( preDelaySlider.getRight(), top, potSize, potSize );
-    decaySlider.setBounds( sizeSlider.getX(), sizeSlider.getBottom(), potSize, potSize );
+    erCutOffSlider.setBounds( indent, top, potSize, potSize );
+    
+    preDelaySlider.setBounds( erCutOffSlider.getX(), erCutOffSlider.getBottom() + spacing, potSize, potSize );
+    reverseButton.setBounds( preDelaySlider.getX(), preDelaySlider.getBottom(), potSize, textHeight );
+    
+    
+    sizeSlider.setBounds( preDelaySlider.getRight() + indent, top, potSize, potSize );
+    decaySlider.setBounds( sizeSlider.getX(), sizeSlider.getBottom() + spacing, potSize, potSize );
     fbControlButton.setBounds( decaySlider.getX(), decaySlider.getBottom(), potSize, textHeight );
     
-    lrCutOffSlider.setBounds( sizeSlider.getRight(), top, potSize, potSize );
+    lrHPFCutOffSlider.setBounds( sizeSlider.getRight()  + indent, top, potSize, potSize );
+    lrLPFCutOffSlider.setBounds( lrHPFCutOffSlider.getX(), lrHPFCutOffSlider.getBottom() + spacing, potSize, potSize );
     
-    modulationRateSlider.setBounds( lrCutOffSlider.getRight(), top, potSize, potSize );
-    modulationDepthSlider.setBounds( modulationRateSlider.getX(), modulationRateSlider.getBottom(), potSize, potSize );
+    modulationRateSlider.setBounds( lrLPFCutOffSlider.getRight()  + indent, top, potSize, potSize );
+    modulationDepthSlider.setBounds( modulationRateSlider.getX(), modulationRateSlider.getBottom() + spacing, potSize, potSize );
     modulationTypeButton.setBounds( modulationDepthSlider.getX(), modulationDepthSlider.getBottom(), potSize, textHeight );
     
-    shimLevelSlider.setBounds( modulationRateSlider.getRight(), top, potSize, potSize );
-    shimTranspositionSlider.setBounds( shimLevelSlider.getX(), shimLevelSlider.getBottom(), potSize, potSize );
+    shimLevelSlider.setBounds( modulationRateSlider.getRight() + indent, top, potSize, potSize );
+    shimTranspositionSlider.setBounds( shimLevelSlider.getX(), shimLevelSlider.getBottom() + spacing, potSize, potSize );
     
-    mixSlider.setBounds( shimLevelSlider.getRight(), top, potSize, potSize );
+    mixSlider.setBounds( shimLevelSlider.getRight() + indent, top, potSize, potSize );
     
     
     

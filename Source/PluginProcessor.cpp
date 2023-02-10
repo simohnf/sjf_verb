@@ -27,12 +27,14 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
     
     mixParameter = parameters.getRawParameterValue("mix");
     preDelayParameter = parameters.getRawParameterValue("preDelay");
+    reverseParameter = parameters.getRawParameterValue("reverse");
     sizeParameter = parameters.getRawParameterValue("size");
     modulationDepthParameter = parameters.getRawParameterValue("modulationDepth");
     modulationRateParameter = parameters.getRawParameterValue("modulationRate");
     modulationTypeParameter = parameters.getRawParameterValue("modulationType");
     decayParameter = parameters.getRawParameterValue("decay");
-    lrCutoffParameter = parameters.getRawParameterValue("lrCutOff");
+    lrLPFParameter = parameters.getRawParameterValue("lrLPFCutOff");
+    lrHPFParameter =  parameters.getRawParameterValue("lrHPFCutOff");
     erCutoffParameter = parameters.getRawParameterValue("erCutOff");
     shimmerLevelParameter = parameters.getRawParameterValue("shimmerLevel");
     shimmerTranspositionParameter = parameters.getRawParameterValue("shimmerTransposition");
@@ -197,12 +199,14 @@ void Sjf_verbAudioProcessor::setParameters()
     auto sampleRate = getSampleRate();
     rev.setSize( *sizeParameter );
     rev.setPreDelay( *preDelayParameter * 0.001 * sampleRate );
+    rev.reversePredelay( *reverseParameter );
     rev.setModulationRate( *modulationRateParameter ); 
     rev.setModulationDepth( *modulationDepthParameter );
     rev.setModulationType( *modulationTypeParameter );
     rev.setDecay( *decayParameter );
     rev.setMix( *mixParameter );
-    rev.setLrCutOff( calculateLPFCoefficient< float >( *lrCutoffParameter, sampleRate ) );
+    rev.setLrLPFCutOff( calculateLPFCoefficient< float >( *lrLPFParameter, sampleRate ) );
+    rev.setLrHPFCutOff( calculateLPFCoefficient< float >( *lrHPFParameter, sampleRate ) );
     rev.setErCutOff( calculateLPFCoefficient< float >( *erCutoffParameter, sampleRate ) );
     rev.setShimmerLevel( *shimmerLevelParameter );
     rev.setShimmerTransposition( *shimmerTranspositionParameter );
@@ -222,11 +226,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sjf_verbAudioProcessor::crea
 {
     juce::AudioProcessorValueTreeState::ParameterLayout params;
     
+    juce::NormalisableRange < float > cutOffRange( 20.0f, 20000.0f, 0.001f );
+    cutOffRange.setSkewForCentre( 1000.0f );
     
-    params.add( std::make_unique<juce::AudioParameterFloat> ("mix", "Mix", 0.0f, 100.0f, 100.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> ("erCutOff", "ErCutOff", cutOffRange, 1000.0f) );
     params.add( std::make_unique<juce::AudioParameterFloat> ("preDelay", "PreDelay", 1.0f, 100.0f, 20.0f) );
+    params.add( std::make_unique<juce::AudioParameterBool> ("reverse", "Reverse", false) );
     
-    juce::NormalisableRange < float > modRateRange( 0.00001f, 100.0f, 0.001f );
+    juce::NormalisableRange < float > modRateRange( 0.0001f, 100.0f, 0.0001f );
     modRateRange.setSkewForCentre( 1.0f );
     params.add( std::make_unique<juce::AudioParameterFloat> ("modulationRate", "ModulationRate", modRateRange, 1.0f) );
     juce::NormalisableRange < float > modDepthRange( 0.00f, 100.0f, 0.001f );
@@ -236,16 +243,17 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sjf_verbAudioProcessor::crea
     
     params.add( std::make_unique<juce::AudioParameterFloat> ("size", "Size", 0.0f, 100.0f, 80.0f) );
     params.add( std::make_unique<juce::AudioParameterFloat> ("decay", "Decay", 0.0f, 100.0f, 80.0f) );
+    params.add( std::make_unique<juce::AudioParameterBool> ("feedbackControl", "FeedbackControl", false) );
     
-    juce::NormalisableRange < float > cutOffRange( 20.0f, 20000.0f, 0.001f );
-    cutOffRange.setSkewForCentre( 1000.0f );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("lrCutOff", "LrCutOff", cutOffRange, 1000.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("erCutOff", "ErCutOff", cutOffRange, 1000.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> ("lrLPFCutOff", "LrLPFCutOff", cutOffRange, 10000.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> ("lrHPFCutOff", "lrHPFCutOff", cutOffRange, 10.0f) );
     
     params.add( std::make_unique<juce::AudioParameterFloat> ("shimmerLevel", "ShimmerLevel", 0.0f, 100.0f, 0.0f) );
     params.add( std::make_unique<juce::AudioParameterFloat> ("shimmerTransposition", "ShimmerTransposition", -12.0f, 12.0f, 12.0f) );
+    
+    params.add( std::make_unique<juce::AudioParameterFloat> ("mix", "Mix", 0.0f, 100.0f, 100.0f) );
     params.add( std::make_unique<juce::AudioParameterInt> ("interpolationType", "InterpolationType", 1, 6, 1) );
-    params.add( std::make_unique<juce::AudioParameterBool> ("feedbackControl", "FeedbackControl", false) );
+
     
     
     return params;

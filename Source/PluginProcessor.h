@@ -67,12 +67,14 @@ private:
     
     std::atomic<float>* mixParameter = nullptr;
     std::atomic<float>* preDelayParameter = nullptr;
+    std::atomic<float>* reverseParameter = nullptr;
     std::atomic<float>* sizeParameter = nullptr;
     std::atomic<float>* modulationRateParameter = nullptr;
     std::atomic<float>* modulationDepthParameter = nullptr;
     std::atomic<float>* modulationTypeParameter = nullptr;
     std::atomic<float>* decayParameter = nullptr;
-    std::atomic<float>* lrCutoffParameter = nullptr;
+    std::atomic<float>* lrHPFParameter = nullptr;
+    std::atomic<float>* lrLPFParameter = nullptr;
     std::atomic<float>* erCutoffParameter = nullptr;
     std::atomic<float>* shimmerLevelParameter = nullptr;
     std::atomic<float>* shimmerTranspositionParameter = nullptr;
