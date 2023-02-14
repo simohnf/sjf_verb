@@ -60,7 +60,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     modulationDepthSlider.setNumDecimalPlacesToDisplay(3);
     modulationDepthSlider.setTextValueSuffix ("%");
     
-    modulationTypeButtonAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, "modulationType", modulationTypeButton ));
+    
     addAndMakeVisible( &modulationTypeButton );
     modulationTypeButton.setButtonText( "sine mod" );
     modulationTypeButton.onStateChange  = [ this ]
@@ -74,7 +74,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
             modulationTypeButton.setButtonText( "sine mod" );
         }
     };
-    
+    modulationTypeButtonAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, "modulationType", modulationTypeButton ));
     
     decaySliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "decay", decaySlider));
     addAndMakeVisible( &decaySlider );
