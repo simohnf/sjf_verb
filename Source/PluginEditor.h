@@ -31,12 +31,12 @@ private:
     juce::AudioProcessorValueTreeState& valueTreeState;
     sjf_lookAndFeel otherLookandFeel; 
     
-    juce::Slider mixSlider, preDelaySlider, sizeSlider, modulationRateSlider, modulationDepthSlider, decaySlider, lrLPFCutOffSlider, lrHPFCutOffSlider, erCutOffSlider, shimLevelSlider, shimTranspositionSlider;
+    juce::Slider mixSlider, preDelaySlider, sizeSlider, diffusionSlider, modulationRateSlider, modulationDepthSlider, decaySlider, lrLPFCutoffSlider, lrHPFCutoffSlider, erLPFCutoffSlider, erHPFCutoffSlider, shimLevelSlider, shimTranspositionSlider;
     juce::ComboBox interpolationTypeBox;
-    juce::ToggleButton reverseButton, fbControlButton, modulationTypeButton;
+    juce::ToggleButton reverseButton, fbControlButton, modulationTypeButton, testButton;
 
     
-    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixSliderAttachment, preDelaySliderAttachment, sizeSliderAttachment, modulationRateSliderAttachment, modulationDepthSliderAttachment, decaySliderAttachment, lrLPFCutOffSliderAttachment, lrHPFCutOffSliderAttachment, erCutOffSliderAttachment, shimLevelSliderAttachment, shimTranspositionSliderAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixSliderAttachment, preDelaySliderAttachment, sizeSliderAttachment, diffusionSliderAttachment, modulationRateSliderAttachment, modulationDepthSliderAttachment, decaySliderAttachment, lrLPFCutoffSliderAttachment, lrHPFCutoffSliderAttachment, erLPFCutoffSliderAttachment, erHPFCutoffSliderAttachment, shimLevelSliderAttachment, shimTranspositionSliderAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> interpolationTypeBoxAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> reverseButtonAttachment, fbControlButtonAttachment, modulationTypeButtonAttachment;
     

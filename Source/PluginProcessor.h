@@ -62,6 +62,8 @@ public:
     void setParameters();
     
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    
+    sjf_zitaRev< float > rev; // move back to private after testing!!!!
 private:
     juce::AudioProcessorValueTreeState parameters;
     
@@ -69,13 +71,15 @@ private:
     std::atomic<float>* preDelayParameter = nullptr;
     std::atomic<float>* reverseParameter = nullptr;
     std::atomic<float>* sizeParameter = nullptr;
+    std::atomic<float>* diffusionParameter = nullptr;
     std::atomic<float>* modulationRateParameter = nullptr;
     std::atomic<float>* modulationDepthParameter = nullptr;
     std::atomic<float>* modulationTypeParameter = nullptr;
     std::atomic<float>* decayParameter = nullptr;
     std::atomic<float>* lrHPFParameter = nullptr;
     std::atomic<float>* lrLPFParameter = nullptr;
-    std::atomic<float>* erCutoffParameter = nullptr;
+    std::atomic<float>* erLPFCutoffParameter = nullptr;
+    std::atomic<float>* erHPFCutoffParameter = nullptr;
     std::atomic<float>* shimmerLevelParameter = nullptr;
     std::atomic<float>* shimmerTranspositionParameter = nullptr;
     std::atomic<float>* interpolationTypeParameter = nullptr;
@@ -84,7 +88,7 @@ private:
     
     
 //    sjf_reverb< float, 8, 4 > rev;
-    sjf_zitaRev< float > rev;
+//    sjf_zitaRev< float > rev;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_verbAudioProcessor)
 };
