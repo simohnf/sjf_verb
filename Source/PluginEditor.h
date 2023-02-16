@@ -33,12 +33,12 @@ private:
     
     juce::Slider mixSlider, preDelaySlider, sizeSlider, diffusionSlider, modulationRateSlider, modulationDepthSlider, decaySlider, lrLPFCutoffSlider, lrHPFCutoffSlider, erLPFCutoffSlider, erHPFCutoffSlider, shimLevelSlider, shimTranspositionSlider;
     juce::ComboBox interpolationTypeBox;
-    juce::ToggleButton reverseButton, fbControlButton, modulationTypeButton, testButton;
+    juce::ToggleButton reverseButton, fbControlButton, modulationTypeButton, monoLowButton, testButton;
 
     
     std::unique_ptr<juce::AudioProcessorValueTreeState::SliderAttachment> mixSliderAttachment, preDelaySliderAttachment, sizeSliderAttachment, diffusionSliderAttachment, modulationRateSliderAttachment, modulationDepthSliderAttachment, decaySliderAttachment, lrLPFCutoffSliderAttachment, lrHPFCutoffSliderAttachment, erLPFCutoffSliderAttachment, erHPFCutoffSliderAttachment, shimLevelSliderAttachment, shimTranspositionSliderAttachment;
     std::unique_ptr<juce::AudioProcessorValueTreeState::ComboBoxAttachment> interpolationTypeBoxAttachment;
-    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> reverseButtonAttachment, fbControlButtonAttachment, modulationTypeButtonAttachment;
+    std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> reverseButtonAttachment, fbControlButtonAttachment, monoLowButtonAttachment, modulationTypeButtonAttachment;
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ( Sjf_verbAudioProcessorEditor )
 };

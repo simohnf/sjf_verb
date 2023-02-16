@@ -149,6 +149,10 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     addAndMakeVisible( &fbControlButton );
     fbControlButton.setButtonText( "fb control" );
     
+    monoLowButtonAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, "monoLow", monoLowButton ));
+    addAndMakeVisible( &monoLowButton );
+    monoLowButton.setButtonText( "mono low" );
+    
     addAndMakeVisible( &testButton );
     testButton.setButtonText( "test" );
     testButton.onClick = [ this ]
@@ -217,7 +221,8 @@ void Sjf_verbAudioProcessorEditor::resized()
     shimTranspositionSlider.setBounds( shimLevelSlider.getX(), shimLevelSlider.getBottom() + spacing, potSize, potSize );
     
     mixSlider.setBounds( shimLevelSlider.getRight() + indent, top, potSize, potSize );
-    testButton.setBounds(mixSlider.getX(), mixSlider.getBottom(), potSize, textHeight );
+    monoLowButton.setBounds( mixSlider.getX(), mixSlider.getBottom(), potSize, textHeight );
+    testButton.setBounds( monoLowButton.getX(), monoLowButton.getBottom(), potSize, textHeight );
     
     
     

@@ -42,6 +42,7 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
     shimmerTranspositionParameter = parameters.getRawParameterValue("shimmerTransposition");
     interpolationTypeParameter = parameters.getRawParameterValue("interpolationType");
     feedbackControlParameter = parameters.getRawParameterValue("feedbackControl");
+    monoLowParameter = parameters.getRawParameterValue("monoLow");
     
     setParameters();
 }
@@ -215,7 +216,8 @@ void Sjf_verbAudioProcessor::setParameters()
     rev.setShimmerLevel( *shimmerLevelParameter );
     rev.setShimmerTransposition( *shimmerTranspositionParameter );
     rev.setInterpolationType( *interpolationTypeParameter );
-    rev.setFeedbackControl( *feedbackControlParameter ); 
+    rev.setFeedbackControl( *feedbackControlParameter );
+    rev.setMonoLow( *monoLowParameter );
 }
 //==============================================================================
 // This creates new instances of the plugin..
@@ -251,6 +253,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sjf_verbAudioProcessor::crea
     params.add( std::make_unique<juce::AudioParameterFloat> ("decay", "Decay", 0.0f, 100.0f, 80.0f) );
     params.add( std::make_unique<juce::AudioParameterBool> ("feedbackControl", "FeedbackControl", false) );
     
+    params.add( std::make_unique<juce::AudioParameterBool> ("monoLow", "MonoLow", false) );
     params.add( std::make_unique<juce::AudioParameterFloat> ("lrLPFCutoff", "LrLPFCutoff", CutoffRange, 20000.0f) );
     params.add( std::make_unique<juce::AudioParameterFloat> ("lrHPFCutoff", "lrHPFCutoff", CutoffRange, 10.0f) );
     

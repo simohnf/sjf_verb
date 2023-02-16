@@ -84,6 +84,7 @@ private:
     std::atomic<float>* shimmerTranspositionParameter = nullptr;
     std::atomic<float>* interpolationTypeParameter = nullptr;
     std::atomic<float>* feedbackControlParameter = nullptr;
+    std::atomic<float>* monoLowParameter = nullptr;
     
     
     
