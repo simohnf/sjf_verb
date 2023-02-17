@@ -59,7 +59,7 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    void setParameters();
+    
     
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
@@ -69,6 +69,8 @@ public:
     }
     
 private:
+    void setReverbParameters();
+    
     sjf_zitaRev< float > rev;
     
     juce::AudioProcessorValueTreeState parameters;
@@ -91,11 +93,10 @@ private:
     std::atomic<float>* interpolationTypeParameter = nullptr;
     std::atomic<float>* feedbackControlParameter = nullptr;
     std::atomic<float>* monoLowParameter = nullptr;
+    std::atomic<float>* earlyReflectionTypeParameter = nullptr;
     
     bool m_revtype = false;
     
-//    sjf_reverb< float, 8, 4 > rev;
-//    sjf_zitaRev< float > rev;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_verbAudioProcessor)
 };

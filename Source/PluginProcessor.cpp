@@ -44,7 +44,7 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
     feedbackControlParameter = parameters.getRawParameterValue("feedbackControl");
     monoLowParameter = parameters.getRawParameterValue("monoLow");
     
-    setParameters();
+    setReverbParameters();
 }
 
 Sjf_verbAudioProcessor::~Sjf_verbAudioProcessor()
@@ -118,7 +118,7 @@ void Sjf_verbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlo
 {
     rev.initialise( sampleRate, getTotalNumInputChannels(), getTotalNumOutputChannels(), samplesPerBlock);
     
-    setParameters();
+    setReverbParameters();
 }
 
 void Sjf_verbAudioProcessor::releaseResources()
@@ -164,9 +164,9 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
         buffer.clear (i, 0, buffer.getNumSamples());
     }
     
-    setParameters();
-    if ( m_revtype ){ rev.processAudio2( buffer ); }
-    else { rev.processAudio( buffer ); }
+    setReverbParameters();
+    
+    rev.processAudio( buffer );
 }
 
 //==============================================================================
@@ -198,7 +198,7 @@ void Sjf_verbAudioProcessor::setStateInformation (const void* data, int sizeInBy
         }
 }
 //==============================================================================
-void Sjf_verbAudioProcessor::setParameters()
+void Sjf_verbAudioProcessor::setReverbParameters()
 {
     auto sampleRate = getSampleRate();
     rev.setSize( *sizeParameter );
@@ -219,6 +219,7 @@ void Sjf_verbAudioProcessor::setParameters()
     rev.setInterpolationType( *interpolationTypeParameter );
     rev.setFeedbackControl( *feedbackControlParameter );
     rev.setMonoLow( *monoLowParameter );
+    rev.setEarlyReflectionType( m_revtype );
 }
 //==============================================================================
 // This creates new instances of the plugin..
