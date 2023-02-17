@@ -165,7 +165,8 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     }
     
     setParameters();
-    rev.processAudio( buffer );
+    if ( m_revtype ){ rev.processAudio2( buffer ); }
+    else { rev.processAudio( buffer ); }
 }
 
 //==============================================================================

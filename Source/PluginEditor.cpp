@@ -157,7 +157,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     testButton.setButtonText( "test" );
     testButton.onClick = [ this ]
     {
-        audioProcessor.rev.filterBeforeShimmer( testButton.getToggleState() );
+        audioProcessor.setRevType( testButton.getToggleState() );
     };
     
     setSize ( 7*potSize + indent*9, 4*potSize );

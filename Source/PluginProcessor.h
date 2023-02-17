@@ -63,8 +63,14 @@ public:
     
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
-    sjf_zitaRev< float > rev; // move back to private after testing!!!!
+    void setRevType( const bool& trueForType2 )
+    {
+        m_revtype = trueForType2;
+    }
+    
 private:
+    sjf_zitaRev< float > rev;
+    
     juce::AudioProcessorValueTreeState parameters;
     
     std::atomic<float>* mixParameter = nullptr;
@@ -86,7 +92,7 @@ private:
     std::atomic<float>* feedbackControlParameter = nullptr;
     std::atomic<float>* monoLowParameter = nullptr;
     
-    
+    bool m_revtype = false;
     
 //    sjf_reverb< float, 8, 4 > rev;
 //    sjf_zitaRev< float > rev;
