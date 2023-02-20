@@ -36,13 +36,14 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
     decayParameter = parameters.getRawParameterValue("decay");
     lrLPFParameter = parameters.getRawParameterValue("lrLPFCutoff");
     lrHPFParameter =  parameters.getRawParameterValue("lrHPFCutoff");
-    erLPFCutoffParameter = parameters.getRawParameterValue("erLPFCutoff");
-    erHPFCutoffParameter = parameters.getRawParameterValue("erHPFCutoff");
+    inputLPFCutoffParameter = parameters.getRawParameterValue("inputLPFCutoff"); 
+    inputHPFCutoffParameter = parameters.getRawParameterValue("inputHPFCutoff");
     shimmerLevelParameter = parameters.getRawParameterValue("shimmerLevel");
     shimmerTranspositionParameter = parameters.getRawParameterValue("shimmerTransposition");
     interpolationTypeParameter = parameters.getRawParameterValue("interpolationType");
-    feedbackControlParameter = parameters.getRawParameterValue("feedbackControl");
+    feedbackDriveParameter = parameters.getRawParameterValue("feedbackDrive");
     monoLowParameter = parameters.getRawParameterValue("monoLow");
+    earlyReflectionTypeParameter = parameters.getRawParameterValue("earlyReflectionType");
     
     setReverbParameters();
 }
@@ -212,14 +213,14 @@ void Sjf_verbAudioProcessor::setReverbParameters()
     rev.setMix( *mixParameter );
     rev.setLrLPFCutoff( calculateLPFCoefficient< float >( *lrLPFParameter, sampleRate ) );
     rev.setLrHPFCutoff( calculateLPFCoefficient< float >( *lrHPFParameter, sampleRate ) );
-    rev.setErLPFCutoff( calculateLPFCoefficient< float >( *erLPFCutoffParameter, sampleRate ) );
-    rev.setErHPFCutoff( calculateLPFCoefficient< float >( *erHPFCutoffParameter, sampleRate ) );
+    rev.setinputLPFCutoff( calculateLPFCoefficient< float >( *inputLPFCutoffParameter, sampleRate ) );
+    rev.setinputHPFCutoff( calculateLPFCoefficient< float >( *inputHPFCutoffParameter, sampleRate ) ); 
     rev.setShimmerLevel( *shimmerLevelParameter );
     rev.setShimmerTransposition( *shimmerTranspositionParameter );
     rev.setInterpolationType( *interpolationTypeParameter );
-    rev.setFeedbackControl( *feedbackControlParameter );
+    rev.setfeedbackDrive( *feedbackDriveParameter );
     rev.setMonoLow( *monoLowParameter );
-    rev.setEarlyReflectionType( m_revtype );
+    rev.setEarlyReflectionType( *earlyReflectionTypeParameter );
 }
 //==============================================================================
 // This creates new instances of the plugin..
@@ -234,38 +235,48 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sjf_verbAudioProcessor::crea
 {
     juce::AudioProcessorValueTreeState::ParameterLayout params;
     
+    static constexpr int pIDVersionNumber = 1;
+    
+    juce::NormalisableRange < float > preDelayRange( 1.0f, 1000.0f, 0.001f );
+    preDelayRange.setSkewForCentre(50);
     juce::NormalisableRange < float > CutoffRange( 20.0f, 20000.0f, 0.001f );
     CutoffRange.setSkewForCentre( 1000.0f );
-    
-    params.add( std::make_unique<juce::AudioParameterFloat> ("erLPFCutoff", "ErLPFCutoff", CutoffRange, 20000.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("erHPFCutoff", "ErHPFCutoff", CutoffRange, 20.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("preDelay", "PreDelay", 1.0f, 100.0f, 20.0f) );
-    params.add( std::make_unique<juce::AudioParameterBool> ("reverse", "Reverse", false) );
-    
     juce::NormalisableRange < float > modRateRange( 0.0001f, 100.0f, 0.0001f );
     modRateRange.setSkewForCentre( 1.0f );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("modulationRate", "ModulationRate", modRateRange, 1.0f) );
+    
     juce::NormalisableRange < float > modDepthRange( 0.00f, 100.0f, 0.001f );
     modDepthRange.setSkewForCentre( 10.0f );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("modulationDepth", "ModulationDepth", modDepthRange, 0.0f) );
-    params.add( std::make_unique<juce::AudioParameterBool> ("modulationType", "ModulationType", false) );
     
-    params.add( std::make_unique<juce::AudioParameterFloat> ("size", "Size", 0.0f, 100.0f, 80.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("diffusion", "Diffusion", 0.0f, 100.0f, 80.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("decay", "Decay", 0.0f, 100.0f, 80.0f) );
-    params.add( std::make_unique<juce::AudioParameterBool> ("feedbackControl", "FeedbackControl", false) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "inputLPFCutoff", pIDVersionNumber }, "InputLPFCutoff", CutoffRange, 20000.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "inputHPFCutoff", pIDVersionNumber }, "InputHPFCutoff", CutoffRange, 20.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "preDelay", pIDVersionNumber }, "PreDelay", preDelayRange, 20.0f) );
+    params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ "reverse", pIDVersionNumber }, "Reverse", false) );
     
-    params.add( std::make_unique<juce::AudioParameterBool> ("monoLow", "MonoLow", false) );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("lrLPFCutoff", "LrLPFCutoff", CutoffRange, 20000.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("lrHPFCutoff", "lrHPFCutoff", CutoffRange, 10.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "size", pIDVersionNumber }, "Size", 0.0f, 100.0f, 80.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "diffusion", pIDVersionNumber }, "Diffusion", 0.0f, 100.0f, 80.0f) );
+    params.add( std::make_unique<juce::AudioParameterInt> (juce::ParameterID{ "earlyReflectionType", pIDVersionNumber }, "EarlyReflectionType", 1, 4, 1) );
     
-    params.add( std::make_unique<juce::AudioParameterFloat> ("shimmerLevel", "ShimmerLevel", 0.0f, 100.0f, 0.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> ("shimmerTransposition", "ShimmerTransposition", -12.0f, 12.0f, 12.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "decay", pIDVersionNumber }, "Decay", 0.0f, 100.0f, 80.0f) );
+    params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ "feedbackDrive", pIDVersionNumber }, "feedbackDrive", false) );
     
-    params.add( std::make_unique<juce::AudioParameterFloat> ("mix", "Mix", 0.0f, 100.0f, 100.0f) );
-    params.add( std::make_unique<juce::AudioParameterInt> ("interpolationType", "InterpolationType", 1, 6, 1) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "lrLPFCutoff", pIDVersionNumber }, "LrLPFCutoff", CutoffRange, 20000.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "lrHPFCutoff", pIDVersionNumber }, "LrHPFCutoff", CutoffRange, 10.0f) );
+    
+    params.add( std::make_unique<juce::AudioParameterFloat> ( juce::ParameterID{ "modulationRate", pIDVersionNumber }, "ModulationRate", modRateRange, 1.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "modulationDepth", pIDVersionNumber }, "ModulationDepth", modDepthRange, 0.0f) );
+    params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ "modulationType", pIDVersionNumber }, "ModulationType", false) );
+    
+    
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "shimmerLevel", pIDVersionNumber }, "ShimmerLevel", 0.0f, 100.0f, 0.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "shimmerTransposition", pIDVersionNumber }, "ShimmerTransposition", -12.0f, 12.0f, 12.0f) );
+    
+    params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ "monoLow", pIDVersionNumber }, "MonoLow", false) );
+    params.add( std::make_unique<juce::AudioParameterInt> (juce::ParameterID{ "interpolationType", pIDVersionNumber }, "InterpolationType", 1, 6, 1) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "mix", pIDVersionNumber }, "Mix", 0.0f, 100.0f, 100.0f) );
+    
+    
+    
 
-    
     
     return params;
 }

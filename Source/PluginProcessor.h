@@ -63,10 +63,10 @@ public:
     
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
-    void setRevType( const bool& trueForType2 )
-    {
-        m_revtype = trueForType2;
-    }
+//    void setRevType( const bool& trueForType2 )
+//    {
+//        m_revtype = trueForType2;
+//    }
     
 private:
     void setReverbParameters();
@@ -86,16 +86,16 @@ private:
     std::atomic<float>* decayParameter = nullptr;
     std::atomic<float>* lrHPFParameter = nullptr;
     std::atomic<float>* lrLPFParameter = nullptr;
-    std::atomic<float>* erLPFCutoffParameter = nullptr;
-    std::atomic<float>* erHPFCutoffParameter = nullptr;
+    std::atomic<float>* inputLPFCutoffParameter = nullptr;
+    std::atomic<float>* inputHPFCutoffParameter = nullptr;
     std::atomic<float>* shimmerLevelParameter = nullptr;
     std::atomic<float>* shimmerTranspositionParameter = nullptr;
     std::atomic<float>* interpolationTypeParameter = nullptr;
-    std::atomic<float>* feedbackControlParameter = nullptr;
+    std::atomic<float>* feedbackDriveParameter = nullptr;
     std::atomic<float>* monoLowParameter = nullptr;
     std::atomic<float>* earlyReflectionTypeParameter = nullptr;
     
-    bool m_revtype = false;
+//    bool m_revtype = false;
     
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_verbAudioProcessor)
