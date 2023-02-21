@@ -47,9 +47,20 @@ private:
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
     
     
-//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primeBackGround_png, BinaryData::primeBackGround_pngSize );
-//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primeBackGround2_png, BinaryData::primeBackGround2_pngSize );
-    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primeBackGround3_png, BinaryData::primeBackGround3_pngSize );
+    juce::Image m_backgroundImage;
+    std::array< juce::Image, 4 > m_images
+    {
+        juce::ImageCache::getFromMemory (BinaryData::primes1_png, BinaryData::primes1_pngSize ),
+        juce::ImageCache::getFromMemory (BinaryData::primes2_png, BinaryData::primes2_pngSize ),
+        juce::ImageCache::getFromMemory (BinaryData::primes3_png, BinaryData::primes3_pngSize ),
+        juce::ImageCache::getFromMemory (BinaryData::primes4_png, BinaryData::primes4_pngSize )
+    };
     
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes2_png, BinaryData::primes2_pngSize );
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes3_png, BinaryData::primes3_pngSize );
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes4_png, BinaryData::primes4_pngSize );
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::Tree1_png, BinaryData::Tree1_pngSize );
+
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ( Sjf_verbAudioProcessorEditor )
 };

@@ -18,9 +18,6 @@
 Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
     : AudioProcessorEditor (&p), audioProcessor (p), valueTreeState (vts)
 {
-//    m_backgroundImage.multiplyAllAlphas( 0.5 );
-    
-    
     setLookAndFeel( &otherLookandFeel );
     otherLookandFeel.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, juce::Colours::black.withAlpha(0.3f));
     
@@ -97,14 +94,8 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     modulationTypeButton.setButtonText( "sine mod" );
     modulationTypeButton.onStateChange  = [ this ]
     {
-        if ( modulationTypeButton.getToggleState() )
-        {
-            modulationTypeButton.setButtonText( "rand mod" );
-        }
-        else
-        {
-            modulationTypeButton.setButtonText( "sine mod" );
-        }
+        if ( modulationTypeButton.getToggleState() ) { modulationTypeButton.setButtonText( "rand mod" ); }
+        else { modulationTypeButton.setButtonText( "sine mod" ); }
     };
     modulationTypeButtonAttachment.reset (new juce::AudioProcessorValueTreeState::ButtonAttachment (valueTreeState, "modulationType", modulationTypeButton ));
     modulationTypeButton.setTooltip("The modulation type determines the shape of the waveform used to modulate the delaylines. Sinusoidal modulation is a little more predictable and can result in more extreme results at the same settings of modulation rate and depth");
@@ -196,22 +187,24 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     monoLowButton.setTooltip("This applies MidSide processing to the output so that low frequencies are converted to mono");
     
     addAndMakeVisible( &earlyReflectionTypeBox );
+    earlyReflectionTypeBox.onChange = [ this ]
+    {
+        auto id = earlyReflectionTypeBox.getSelectedId() - 1;
+        m_backgroundImage = m_images[ id ];
+        m_backgroundImage.multiplyAllAlphas( 0.7f );
+        repaint();
+    };
     earlyReflectionTypeBox.addItem( "zitaRev", 1 );
     earlyReflectionTypeBox.addItem( "zitaRev2", 2 );
     earlyReflectionTypeBox.addItem( "GeraintLuff", 3 );
     earlyReflectionTypeBox.addItem( "Multitap", 4 );
-//    interpolationTypeBox.addItem( "4th Order", 4 );
-//    interpolationTypeBox.addItem( "Godot", 5 );
-//    interpolationTypeBox.addItem( "Hermite", 6 );
     earlyReflectionTypeBoxAttachment.reset (new juce::AudioProcessorValueTreeState::ComboBoxAttachment (valueTreeState, "earlyReflectionType", earlyReflectionTypeBox));
     earlyReflectionTypeBox.setTooltip("A variety of different early reflection types which can give the reverb a different character");
+
     
 //    addAndMakeVisible( &testButton );
 //    testButton.setButtonText( "test" );
-//    testButton.onClick = [ this ]
-//    {
-//        audioProcessor.setRevType( testButton.getToggleState() );
-//    };
+//    testButton.onClick = [ this ] { audioProcessor.setRevType( testButton.getToggleState() ); };
     
     addAndMakeVisible(&tooltipsToggle);
     tooltipsToggle.setButtonText("Hints");
@@ -239,69 +232,21 @@ Sjf_verbAudioProcessorEditor::~Sjf_verbAudioProcessorEditor()
 //==============================================================================
 void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-//    auto backColour = juce::Colours::darkgrey;
-//    g.fillAll ( backColour );
-//
-//
-//
-//    static constexpr int NUM_RAND_BOXES = 70;
-//    static constexpr auto randomColours = sjf_matrixOfRandomFloats< float, NUM_RAND_BOXES, 4 >();
-//    static constexpr auto randomCoordinates = sjf_matrixOfRandomFloats< float, NUM_RAND_BOXES, 5 >();
-//    static constexpr auto CORNER_SIZE = 5;
-//
-//    for ( int i = 0; i < NUM_RAND_BOXES; i++)
-//    {
-//        int red = randomColours.getValue(i, 0) * 255;
-//        int green = randomColours.getValue(i, 1)  * 255;
-//        int blue = randomColours.getValue(i, 2) * 255;
-//        float alpha = randomColours.getValue(i, 3) * 0.3;
-//        auto randColour = juce::Colour( red, green, blue );
-//        randColour = randColour.withAlpha(alpha);
-//        g.setColour( randColour );
-//
-//        auto x = randomCoordinates.getValue( i, 0 ) * getWidth()*1.5;// - getWidth();
-//        auto y = randomCoordinates.getValue( i, 1 ) * getHeight()*1.5;// - getHeight();
-//        auto w = randomCoordinates.getValue( i, 2 ) * getWidth();
-//        auto h = randomCoordinates.getValue( i, 3 ) * getHeight();
-//        auto rectRand = juce::Rectangle<float>( x, y, w, h );
-//        auto rotate = randomCoordinates.getValue( i, 4 ) * M_PI*2;
-//        auto shearX = randomCoordinates.getValue( i, 5 );
-//        auto shearY = randomCoordinates.getValue( i, 6 );
-//        DBG(" rotate " << rotate << " " << shearX << " " << shearY );
-//        auto rotation = juce::AffineTransform::rotation( rotate, rectRand.getX(), rectRand.getY() );
-//        auto shear = juce::AffineTransform::shear(shearX, shearY);
-//        juce::Path path;
-//        path.addRoundedRectangle( rectRand, CORNER_SIZE );
-//        path.applyTransform( shear );
-//        g.fillPath(path, rotation );
-//    }
+    auto backColour = juce::Colours::darkgrey;
+    g.fillAll ( backColour );
     
-//    juce::Rectangle<int> r = getLocalBounds();
-//    sjf_makeBackground< 40 >( g, r );
-//    juce::Image background = juce::ImageCache::getFromMemory (BinaryData::primeBackGround_png, 1296925 );
-//    background.multiplyAllAlphas( 0.5 );
-    g.setColour ( juce::Colours::darkgrey );
-    g.fillAll();
-    float bcx = m_backgroundImage.getWidth() / 2;
-    float bcy = m_backgroundImage.getHeight() / 2;
+    float scale;
+    float imageW = m_backgroundImage.getWidth();
+    float imageH = m_backgroundImage.getHeight();
+    if ( imageW > imageH ) { scale = getWidth() / imageW; }
+    else { scale = getHeight() / imageH; }
+//    DBG( "scale " << scale << " w " << imageW << " h " << imageH );
+    juce::Image temp = m_backgroundImage.rescaled(imageW*scale, imageH*scale);
+    float bcx = temp.getWidth() / 2;
+    float bcy = temp.getHeight() / 2;
     float gcx = getWidth() / 2;
     float gcy = getHeight() / 2;
-//    g.setColour (juce::Colours::red.withAlpha (0.1f));
-    g.drawImageAt (m_backgroundImage, gcx - bcx,  gcy - bcy);
-//    float scale;
-//    float imageW = m_backgroundImage.getWidth();
-//    float imageH = m_backgroundImage.getHeight();
-//    if ( imageW > imageH ) { scale = getWidth() / imageW; }
-//    else { scale = getHeight() / imageH; }
-//    DBG( "scale " << scale << " w " << imageW << " h " << imageH );
-//    juce::Image temp = m_backgroundImage.rescaled(imageW*scale, imageH*scale);
-//    float bcx = temp.getWidth() / 2;
-//    float bcy = temp.getHeight() / 2;
-//    float gcx = getWidth() / 2;
-//    float gcy = getHeight() / 2;
-//    g.drawImageAt (temp, gcx - bcx,  gcy - bcy);
-//    g.drawImageTransformed(m_backgroundImage, juce::AffineTransform::scale( scale ) );
+    g.drawImageAt ( temp, gcx - bcx,  gcy - bcy );
     
     static constexpr int CORNER_SIZE = 5;
     g.setColour( juce::Colours::beige.withAlpha( 0.2f ) );
