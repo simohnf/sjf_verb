@@ -18,6 +18,8 @@
 Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
     : AudioProcessorEditor (&p), audioProcessor (p), valueTreeState (vts)
 {
+//    m_backgroundImage.multiplyAllAlphas( 0.5 );
+    
     
     setLookAndFeel( &otherLookandFeel );
     otherLookandFeel.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, juce::Colours::black.withAlpha(0.3f));
@@ -275,11 +277,34 @@ void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
 //        g.fillPath(path, rotation );
 //    }
     
-    juce::Rectangle<int> r = getLocalBounds();
-    sjf_makeBackground< 40 >( g, r ); 
+//    juce::Rectangle<int> r = getLocalBounds();
+//    sjf_makeBackground< 40 >( g, r );
+//    juce::Image background = juce::ImageCache::getFromMemory (BinaryData::primeBackGround_png, 1296925 );
+//    background.multiplyAllAlphas( 0.5 );
+    g.setColour ( juce::Colours::darkgrey );
+    g.fillAll();
+    float bcx = m_backgroundImage.getWidth() / 2;
+    float bcy = m_backgroundImage.getHeight() / 2;
+    float gcx = getWidth() / 2;
+    float gcy = getHeight() / 2;
+//    g.setColour (juce::Colours::red.withAlpha (0.1f));
+    g.drawImageAt (m_backgroundImage, gcx - bcx,  gcy - bcy);
+//    float scale;
+//    float imageW = m_backgroundImage.getWidth();
+//    float imageH = m_backgroundImage.getHeight();
+//    if ( imageW > imageH ) { scale = getWidth() / imageW; }
+//    else { scale = getHeight() / imageH; }
+//    DBG( "scale " << scale << " w " << imageW << " h " << imageH );
+//    juce::Image temp = m_backgroundImage.rescaled(imageW*scale, imageH*scale);
+//    float bcx = temp.getWidth() / 2;
+//    float bcy = temp.getHeight() / 2;
+//    float gcx = getWidth() / 2;
+//    float gcy = getHeight() / 2;
+//    g.drawImageAt (temp, gcx - bcx,  gcy - bcy);
+//    g.drawImageTransformed(m_backgroundImage, juce::AffineTransform::scale( scale ) );
     
     static constexpr int CORNER_SIZE = 5;
-    g.setColour( juce::Colours::beige.withAlpha( 0.1f ) );
+    g.setColour( juce::Colours::beige.withAlpha( 0.2f ) );
     static constexpr auto SPACING = textHeight/5;
     auto rect1 = juce::Rectangle<float>( preDelaySlider.getX() - SPACING, inputHPFCutoffSlider.getY() - textHeight, inputHPFCutoffSlider.getRight() - preDelaySlider.getX() + SPACING * 2, inputLPFCutoffSlider.getBottom() - (inputHPFCutoffSlider.getY() - textHeight) + SPACING );
     g.fillRoundedRectangle(rect1, CORNER_SIZE);

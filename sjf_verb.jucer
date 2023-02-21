@@ -5,6 +5,14 @@
               pluginFormats="buildAU,buildAUv3,buildVST3" pluginManufacturer="sjf"
               companyName="sjf">
   <MAINGROUP id="eiPGLS" name="sjf_verb">
+    <GROUP id="{D425B262-D6D0-A5D5-1F93-32885EE03132}" name="New Group">
+      <FILE id="YdvsS7" name="primeBackGround2.png" compile="0" resource="1"
+            file="../../Desktop/primeBackGround2.png" xcodeResource="1"/>
+      <FILE id="fmFeLL" name="primeBackGround.png" compile="0" resource="1"
+            file="../../Desktop/primeBackGround.png" xcodeResource="1"/>
+      <FILE id="exZWPC" name="primeBackGround3.png" compile="0" resource="1"
+            file="../../Desktop/primeBackGround3.png"/>
+    </GROUP>
     <GROUP id="{BCFA9A7E-307F-AA40-0015-B88FA608841E}" name="Source">
       <FILE id="WLYZzj" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>

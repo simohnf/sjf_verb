@@ -46,5 +46,10 @@ private:
     
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
     
+    
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primeBackGround_png, BinaryData::primeBackGround_pngSize );
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primeBackGround2_png, BinaryData::primeBackGround2_pngSize );
+    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primeBackGround3_png, BinaryData::primeBackGround3_pngSize );
+    
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR ( Sjf_verbAudioProcessorEditor )
 };
