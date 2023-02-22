@@ -47,14 +47,15 @@ private:
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
     
     
-    juce::Image m_backgroundImage;
-    std::array< juce::Image, 4 > m_images
-    {
-        juce::ImageCache::getFromMemory (BinaryData::primes1_png, BinaryData::primes1_pngSize ),
-        juce::ImageCache::getFromMemory (BinaryData::primes2_png, BinaryData::primes2_pngSize ),
-        juce::ImageCache::getFromMemory (BinaryData::primes3_png, BinaryData::primes3_pngSize ),
-        juce::ImageCache::getFromMemory (BinaryData::primes4_png, BinaryData::primes4_pngSize )
-    };
+//    juce::Image m_backgroundImage;
+    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory ( BinaryData::primes1_png, BinaryData::primes1_pngSize );
+//    std::array< juce::Image, 4 > m_images
+//    {
+//        juce::ImageCache::getFromMemory ( BinaryData::primes1_png, BinaryData::primes1_pngSize ),
+//        juce::ImageCache::getFromMemory ( BinaryData::primes2_png, BinaryData::primes2_pngSize ),
+//        juce::ImageCache::getFromMemory ( BinaryData::primes3_png, BinaryData::primes3_pngSize ),
+//        juce::ImageCache::getFromMemory ( BinaryData::primes4_png, BinaryData::primes4_pngSize )
+//    };
     
 //    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes2_png, BinaryData::primes2_pngSize );
 //    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory (BinaryData::primes3_png, BinaryData::primes3_pngSize );
