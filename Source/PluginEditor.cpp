@@ -23,22 +23,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
 //    m_backgroundImage.multiplyAllAlphas( 0.7f );
 
     setLookAndFeel( &otherLookandFeel );
-//    otherLookandFeel.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, juce::Colours::black.withAlpha(0.5f));
-    
-//    auto inputColour = juce::Colours::aliceblue.withAlpha(0.5f);
-//    auto reverbSectionColour = juce::Colours::green.withAlpha(0.5f);
-//    auto modColour = juce::Colours::orange.withAlpha(0.5f);
-//    auto shimmerColour = juce::Colours::yellow.withAlpha(0.5f);
-//    auto outColour = juce::Colours::red.withAlpha(0.5f);
 
-//    auto inputColour = juce::Colours::red.withAlpha(0.5f);
-//    auto reverbSectionColour = juce::Colours::red.withAlpha(0.5f);
-//    auto modColour = juce::Colours::red.withAlpha(0.5f);
-//    auto shimmerColour = juce::Colours::red.withAlpha(0.5f);
-//    auto outColour = juce::Colours::red.withAlpha(0.5f);
-    
-//    const auto id1 = juce::Slider::ColourIds::rotarySliderFillColourId;
-    
     mixSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "mix", mixSlider));
     addAndMakeVisible( &mixSlider );
     mixSlider.setSliderStyle (juce::Slider::Rotary);
@@ -46,6 +31,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     mixSlider.setNumDecimalPlacesToDisplay(3);
     mixSlider.setTextValueSuffix ("%");
     mixSlider.setTooltip("Dry/Wet Mix");
+    mixSlider.sendLookAndFeelChange();
 //    mixSlider.setColour(id1, outColour);
     
     preDelaySliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "preDelay", preDelaySlider));
@@ -55,6 +41,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     preDelaySlider.setNumDecimalPlacesToDisplay(3);
     preDelaySlider.setTextValueSuffix ("ms");
     preDelaySlider.setTooltip("Delay before first early reflections");
+    preDelaySlider.sendLookAndFeelChange();
 //    preDelaySlider.setColour( id1, inputColour);
 //    preDelaySlider.setColour(juce::Slider::ColourIds::rotarySliderOutlineColourId, juce::Colours::black.withAlpha(0.5f));
     
@@ -70,6 +57,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     sizeSlider.setNumDecimalPlacesToDisplay(3);
     sizeSlider.setTextValueSuffix ("%");
     sizeSlider.setTooltip("This determines the size of the virtual space created");
+    sizeSlider.sendLookAndFeelChange();
 //    sizeSlider.setColour(id1, reverbSectionColour);
     
     diffusionSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "diffusion", diffusionSlider));
@@ -79,6 +67,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     diffusionSlider.setNumDecimalPlacesToDisplay(3);
     diffusionSlider.setTextValueSuffix ("%");
     diffusionSlider.setTooltip("Higher diffusion results in a denser reverb, lower diffusion results in fewer echoes - meaning that in certain circumstances individual echoes may be heard");
+    diffusionSlider.sendLookAndFeelChange();
 //    diffusionSlider.setColour(id1, reverbSectionColour);
     
     modulationRateSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "modulationRate", modulationRateSlider));
@@ -88,6 +77,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     modulationRateSlider.setNumDecimalPlacesToDisplay(3);
     modulationRateSlider.setTextValueSuffix ("Hz");
     modulationRateSlider.setTooltip("This determines how fast the modulation applied to the delay times is. This can add anything from subtle chorusing to extreme frequency modulation...");
+    modulationRateSlider.sendLookAndFeelChange();
 //    modulationRateSlider.setColour(id1, modColour);
     
     modulationDepthSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "modulationDepth", modulationDepthSlider));
@@ -97,6 +87,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     modulationDepthSlider.setNumDecimalPlacesToDisplay(3);
     modulationDepthSlider.setTextValueSuffix ("%");
     modulationDepthSlider.setTooltip("The depth of the modulation determines how extreme the changes in delay times are. This can add anything from subtle chorusing to extreme frequency modulation... - this can  be set to 0% to save cpu");
+    modulationDepthSlider.sendLookAndFeelChange();
 //    modulationDepthSlider.setColour(id1, modColour);
     
     addAndMakeVisible( &modulationTypeButton );
@@ -118,6 +109,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     decaySlider.setNumDecimalPlacesToDisplay(3);
     decaySlider.setTextValueSuffix ("%");
     decaySlider.setTooltip("The amount of passed back into the delay lines. Higher settings means longer reverb times. At 0% only the early reflections will be heard");
+    decaySlider.sendLookAndFeelChange();
 //    decaySlider.setColour(id1, reverbSectionColour);
     
     lrHPFCutoffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "lrHPFCutoff", lrHPFCutoffSlider));
@@ -127,6 +119,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     lrHPFCutoffSlider.setNumDecimalPlacesToDisplay(3);
     lrHPFCutoffSlider.setTextValueSuffix("Hz");
     lrHPFCutoffSlider.setTooltip("This applies a high pass filter to the tail of the reverb");
+    lrHPFCutoffSlider.sendLookAndFeelChange();
 //    lrHPFCutoffSlider.setColour(id1, reverbSectionColour);
     
     lrLPFCutoffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "lrLPFCutoff", lrLPFCutoffSlider));
@@ -136,6 +129,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     lrLPFCutoffSlider.setNumDecimalPlacesToDisplay(3);
     lrLPFCutoffSlider.setTextValueSuffix("Hz");
     lrLPFCutoffSlider.setTooltip("This applies a low pass filter to the tail of the reverb");
+    lrLPFCutoffSlider.sendLookAndFeelChange();
 //    lrLPFCutoffSlider.setColour(id1, reverbSectionColour);
     
     inputLPFCutoffSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "inputLPFCutoff", inputLPFCutoffSlider)); 
@@ -145,6 +139,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     inputLPFCutoffSlider.setNumDecimalPlacesToDisplay(3);
     inputLPFCutoffSlider.setTextValueSuffix("Hz");
     inputLPFCutoffSlider.setTooltip("This applies a low pass filter to the input signal before it is passed through the reverb");
+    inputLPFCutoffSlider.sendLookAndFeelChange();
 //    inputLPFCutoffSlider.setColour(id1, inputColour);
 
     
@@ -155,6 +150,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     inputHPFCutoffSlider.setNumDecimalPlacesToDisplay(3);
     inputHPFCutoffSlider.setTextValueSuffix("Hz");
     inputHPFCutoffSlider.setTooltip("This applies a high pass filter to the input signal before it is passed through the reverb");
+    inputHPFCutoffSlider.sendLookAndFeelChange();
 //    inputHPFCutoffSlider.setColour(id1, inputColour);
     
     shimLevelSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "shimmerLevel", shimLevelSlider));
@@ -164,6 +160,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     shimLevelSlider.setNumDecimalPlacesToDisplay(3);
     shimLevelSlider.setTextValueSuffix ("%");
     shimLevelSlider.setTooltip("This sets the level of the pitchshifted signal(shimmer) which is then passed back into the reverb - this can  be set to 0% to save cpu");
+    shimLevelSlider.sendLookAndFeelChange();
 //    shimLevelSlider.setColour(id1, shimmerColour);
     
     shimTranspositionSliderAttachment.reset (new juce::AudioProcessorValueTreeState::SliderAttachment (valueTreeState, "shimmerTransposition", shimTranspositionSlider));
@@ -173,6 +170,7 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
     shimTranspositionSlider.setNumDecimalPlacesToDisplay(3);
     shimTranspositionSlider.setTextValueSuffix ("st");
     shimTranspositionSlider.setTooltip("This sets the transposition of the pitchshift (shimmer) which is then passed back into the reverb");
+    shimTranspositionSlider.sendLookAndFeelChange();
 //    shimTranspositionSlider.setColour(id1, shimmerColour);
     
     addAndMakeVisible( &interpolationTypeBox );
@@ -243,12 +241,15 @@ Sjf_verbAudioProcessorEditor::~Sjf_verbAudioProcessorEditor()
 void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
 {
 
-    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
+//    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
+    juce::Rectangle<int> r = getLocalBounds();
+    sjf_makeBackground< 40 >( g, r );
     static constexpr int CORNER_SIZE = 5;
+    static constexpr auto SPACING = textHeight/5;
     
 //    g.setColour( juce::Colours::beige.withAlpha( 0.2f ) );
     g.setColour(juce::Colours::aliceblue.withAlpha(0.3f) );
-    static constexpr auto SPACING = textHeight/5;
+
     auto rect1 = juce::Rectangle<float>( preDelaySlider.getX() - SPACING, inputHPFCutoffSlider.getY() - textHeight, inputHPFCutoffSlider.getRight() - preDelaySlider.getX() + SPACING * 2, inputLPFCutoffSlider.getBottom() - (inputHPFCutoffSlider.getY() - textHeight) + SPACING );
     g.fillRoundedRectangle(rect1, CORNER_SIZE);
     
@@ -261,7 +262,7 @@ void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
     auto rect4 = juce::Rectangle<float>( shimLevelSlider.getX() - SPACING, shimLevelSlider.getY() - textHeight, shimTranspositionSlider.getWidth() + SPACING * 2, shimTranspositionSlider.getBottom() - (shimLevelSlider.getY() - textHeight) + SPACING );
     g.fillRoundedRectangle(rect4, CORNER_SIZE);
     
-    auto rect5 = juce::Rectangle<float>( mixSlider.getX() - SPACING, mixSlider.getY() - textHeight, mixSlider.getWidth() + SPACING * 2, interpolationTypeBox.getBottom() - (mixSlider.getY() - textHeight) + SPACING );
+    auto rect5 = juce::Rectangle<float>( mixSlider.getX() - SPACING, mixSlider.getY() - textHeight, mixSlider.getWidth() + 2*SPACING, interpolationTypeBox.getBottom() - (mixSlider.getY() - textHeight) + tooltipsToggle.getHeight() + 4*SPACING );
     g.fillRoundedRectangle(rect5, CORNER_SIZE);
     
     g.setColour (juce::Colours::white);
@@ -318,12 +319,11 @@ void Sjf_verbAudioProcessorEditor::resized()
     shimLevelSlider.setBounds( modulationRateSlider.getRight() + indent*2, top, potSize, potSize );
     shimTranspositionSlider.setBounds( shimLevelSlider.getX(), shimLevelSlider.getBottom() + spacing, potSize, potSize );
     
-    mixSlider.setBounds( shimLevelSlider.getRight() + indent*2, top2, potSize, potSize );
+    mixSlider.setBounds( shimLevelSlider.getRight() + indent*2, top*1.5, potSize, potSize );
     monoLowButton.setBounds( mixSlider.getX(), mixSlider.getBottom(), potSize, textHeight );
 //    testButton.setBounds( monoLowButton.getX(), monoLowButton.getBottom(), potSize, textHeight );
     interpolationTypeBox.setBounds( monoLowButton.getX(), monoLowButton.getBottom(), potSize, textHeight );
-    
-    tooltipsToggle.setBounds( getWidth() - indent - potSize, getHeight() - textHeight - indent, potSize, textHeight );
+    tooltipsToggle.setBounds( interpolationTypeBox.getX(), interpolationTypeBox.getBottom() + indent, potSize, textHeight );
     
     
 }

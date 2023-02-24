@@ -46,7 +46,13 @@ private:
     
     juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
     
-    
+//    void mouseEnter( const juce::MouseEvent& ) override
+//    {
+//        const auto mouseSource = juce::Desktop::getInstance().getMainMouseSource();
+//        auto* newComp = mouseSource.isTouch() ? nullptr : mouseSource.getComponentUnderMouse();
+//        tooltipWindow.displayTooltip
+//    }
+//    
 //    juce::Image m_backgroundImage;
     juce::Image m_backgroundImage = juce::ImageCache::getFromMemory ( BinaryData::primes1_png, BinaryData::primes1_pngSize );
 //    std::array< juce::Image, 4 > m_images
