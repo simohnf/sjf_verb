@@ -61,7 +61,7 @@ public:
 
     
     
-    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    
     
 //    void setRevType( const bool& trueForType2 )
 //    {
@@ -70,6 +70,7 @@ public:
     
 private:
     void setReverbParameters();
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
     sjf_zitaRev< float > rev;
     

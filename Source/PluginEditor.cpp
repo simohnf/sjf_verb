@@ -13,7 +13,8 @@
 #define textHeight 20
 #define indent 10
 #define alph 0.5f
-
+#define WIDTH 8*potSize + indent*13
+#define HEIGHT 2*potSize + textHeight*5 + indent
 //==============================================================================
 Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
     : AudioProcessorEditor (&p), audioProcessor (p), valueTreeState (vts)
@@ -214,26 +215,37 @@ Sjf_verbAudioProcessorEditor::Sjf_verbAudioProcessorEditor (Sjf_verbAudioProcess
 //    testButton.setButtonText( "test" );
 //    testButton.onClick = [ this ] { audioProcessor.setRevType( testButton.getToggleState() ); };
     
-    addAndMakeVisible(&tooltipsToggle);
-    tooltipsToggle.setButtonText("Hints");
-    tooltipsToggle.onStateChange = [this]
+    addAndMakeVisible( &tooltipsToggle );
+    tooltipsToggle.setButtonText( "Hints" );
+    tooltipsToggle.onStateChange = [ this ]
     {
         if (tooltipsToggle.getToggleState())
         {
-            tooltipWindow.getObject().setAlpha(1.0f);
+            setSize ( WIDTH, HEIGHT+tooltipLabel.getHeight() );
+            tooltipLabel.setVisible( true );
+//            tooltipWindow.getObject().setAlpha(1.0f);
         }
         else
         {
-            tooltipWindow.getObject().setAlpha(0.0f);
+            setSize ( WIDTH, HEIGHT );
+            tooltipLabel.setVisible( false );
+//            tooltipWindow.getObject().setAlpha(0.0f);
         }
     };
-    tooltipWindow.getObject().setAlpha(0.0f);
+    tooltipsToggle.setTooltip( MAIN_TOOLTIP );
+//    tooltipWindow.getObject().setAlpha(0.0f);
     
-    setSize ( 8*potSize + indent*13, 2*potSize + textHeight*5 + indent );
+    addAndMakeVisible( &tooltipLabel );
+    tooltipLabel.setVisible( false );
+    tooltipLabel.setColour( juce::Label::backgroundColourId, otherLookandFeel.backGroundColour.withAlpha( 0.85f ) );
+    
+    startTimer( 250 );
+    setSize ( WIDTH, HEIGHT );
 }
 
 Sjf_verbAudioProcessorEditor::~Sjf_verbAudioProcessorEditor()
 {
+    stopTimer();
     setLookAndFeel (nullptr);
 }
 
@@ -242,13 +254,13 @@ void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
 {
 
 //    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
-    juce::Rectangle<int> r = getLocalBounds();
+    juce::Rectangle<int> r = { WIDTH, HEIGHT + tooltipLabel.getHeight() };
     sjf_makeBackground< 40 >( g, r );
     static constexpr int CORNER_SIZE = 5;
     static constexpr auto SPACING = textHeight/5;
     
 //    g.setColour( juce::Colours::beige.withAlpha( 0.2f ) );
-    g.setColour(juce::Colours::aliceblue.withAlpha(0.3f) );
+    g.setColour(otherLookandFeel.panelColour.withAlpha(0.3f) );
 
     auto rect1 = juce::Rectangle<float>( preDelaySlider.getX() - SPACING, inputHPFCutoffSlider.getY() - textHeight, inputHPFCutoffSlider.getRight() - preDelaySlider.getX() + SPACING * 2, inputLPFCutoffSlider.getBottom() - (inputHPFCutoffSlider.getY() - textHeight) + SPACING );
     g.fillRoundedRectangle(rect1, CORNER_SIZE);
@@ -325,5 +337,11 @@ void Sjf_verbAudioProcessorEditor::resized()
     interpolationTypeBox.setBounds( monoLowButton.getX(), monoLowButton.getBottom(), potSize, textHeight );
     tooltipsToggle.setBounds( interpolationTypeBox.getX(), interpolationTypeBox.getBottom() + indent, potSize, textHeight );
     
-    
+    tooltipLabel.setBounds( 0, HEIGHT, getWidth(), textHeight*2.5 );
+}
+
+
+void Sjf_verbAudioProcessorEditor::timerCallback()
+{
+    sjf_setTooltipLabel( this, MAIN_TOOLTIP, tooltipLabel );
 }

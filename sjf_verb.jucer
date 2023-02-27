@@ -2,8 +2,8 @@
 
 <JUCERPROJECT id="QKo0eo" name="sjf_verb" projectType="audioplug" useAppConfig="0"
               addUsingNamespaceToJuceHeader="0" jucerFormatVersion="1" companyWebsite="sjf"
-              pluginFormats="buildAU,buildVST3" pluginManufacturer="sjf" companyName="sjf"
-              displaySplashScreen="1">
+              pluginFormats="buildAU,buildAUv3,buildVST3" pluginManufacturer="sjf"
+              companyName="sjf" displaySplashScreen="1">
   <MAINGROUP id="eiPGLS" name="sjf_verb">
     <GROUP id="{D425B262-D6D0-A5D5-1F93-32885EE03132}" name="New Group">
       <FILE id="JwLIQD" name="primes1.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes1.png"

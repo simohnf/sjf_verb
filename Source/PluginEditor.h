@@ -16,7 +16,7 @@
 //==============================================================================
 /**
 */
-class Sjf_verbAudioProcessorEditor  : public juce::AudioProcessorEditor
+class Sjf_verbAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer
 {
     
 public:
@@ -28,6 +28,9 @@ public:
     void resized() override;
 
 private:
+    
+    void timerCallback() override;
+    
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     Sjf_verbAudioProcessor& audioProcessor;
@@ -44,8 +47,10 @@ private:
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> reverseButtonAttachment, fbControlButtonAttachment, monoLowButtonAttachment, modulationTypeButtonAttachment;
     
     
-    juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
+//    juce::SharedResourcePointer<juce::TooltipWindow> tooltipWindow;
     
+    juce::Label tooltipLabel;
+    juce::String MAIN_TOOLTIP = "sjf_verb: \nFeedback Delay Network based reverb";
 //    void mouseEnter( const juce::MouseEvent& ) override
 //    {
 //        const auto mouseSource = juce::Desktop::getInstance().getMainMouseSource();
