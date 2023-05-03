@@ -253,9 +253,13 @@ Sjf_verbAudioProcessorEditor::~Sjf_verbAudioProcessorEditor()
 void Sjf_verbAudioProcessorEditor::paint (juce::Graphics& g)
 {
 
-//    sjf_drawBackgroundImage( g, m_backgroundImage, getWidth(), getHeight() );
-    juce::Rectangle<int> r = { WIDTH, HEIGHT + tooltipLabel.getHeight() };
+#ifdef JUCE_DEBUG
+    g.fillAll (getLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId));
+#else
+    juce::Rectangle<int> r = { (int)( WIDTH ), (int)(HEIGHT + tooltipLabel.getHeight()) };
     sjf_makeBackground< 40 >( g, r );
+#endif
+    
     static constexpr int CORNER_SIZE = 5;
     static constexpr auto SPACING = textHeight/5;
     

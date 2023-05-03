@@ -10,7 +10,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
-#include "../../sjf_audio/sjf_lookAndFeel.h"
+#include "../../sjf_audio/sjf_LookAndFeel.h"
 #include "../../sjf_audio/sjf_compileTimeRandom.h"
 
 //==============================================================================
