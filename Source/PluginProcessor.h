@@ -9,9 +9,8 @@
 #pragma once
 
 #include <JuceHeader.h>
-//#include "../../sjf_audio/sjf_reverb.h"
-#include "../../sjf_audio/sjf_zitaRev.h"
-#include "../../sjf_audio/sjf_audioUtilities.h"
+#include "../sjf_audio/sjf_zitaRev.h"
+#include "../sjf_audio/sjf_audioUtilities.h"
 
 //==============================================================================
 /**
