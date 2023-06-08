@@ -4,6 +4,17 @@
 
 This is an algorithmic reverb plugin based on feedback delay networks and incorporating an optional shimmer effect.
 
-NOTE: This requires functions and classes contained in [sjf_audio](https://github.com/simohnf/sjf_audio)
-
 [More info, audio samples, and installer](https://simohnf.github.io./plug-ins/sjf_verb/)
+
+------------------------------
+# To download source:
+
+In terminal 
+```
+git clone https://github.com/simohnf/sjf_verb
+
+cd sjf_verb
+
+git submodule update --init --recursive
+```
+---------------
