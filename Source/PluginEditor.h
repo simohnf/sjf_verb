@@ -59,7 +59,7 @@ private:
 //    }
 //    
 //    juce::Image m_backgroundImage;
-    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory ( BinaryData::primes1_png, BinaryData::primes1_pngSize );
+//    juce::Image m_backgroundImage = juce::ImageCache::getFromMemory ( BinaryData::primes1_png, BinaryData::primes1_pngSize );
 //    std::array< juce::Image, 4 > m_images
 //    {
 //        juce::ImageCache::getFromMemory ( BinaryData::primes1_png, BinaryData::primes1_pngSize ),

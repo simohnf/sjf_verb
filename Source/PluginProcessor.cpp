@@ -21,31 +21,11 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
                      #endif
                        )
 #endif
-, parameters( *this, nullptr, juce::Identifier("sjf_verb"), createParameterLayout() )
+, valueTreeState( *this, nullptr, juce::Identifier("sjf_verb"), createParameterLayout() )
 {
-    rev.initialise( getSampleRate(), getTotalNumInputChannels(), getTotalNumOutputChannels(), getBlockSize() ); 
+    auto params = getParameters();
+    m_rev.addParametersToHandler( valueTreeState, params );
     
-    mixParameter = parameters.getRawParameterValue("mix");
-    preDelayParameter = parameters.getRawParameterValue("preDelay");
-    reverseParameter = parameters.getRawParameterValue("reverse");
-    sizeParameter = parameters.getRawParameterValue("size");
-    diffusionParameter = parameters.getRawParameterValue("diffusion");
-    modulationDepthParameter = parameters.getRawParameterValue("modulationDepth");
-    modulationRateParameter = parameters.getRawParameterValue("modulationRate");
-    modulationTypeParameter = parameters.getRawParameterValue("modulationType");
-    decayParameter = parameters.getRawParameterValue("decay");
-    lrLPFParameter = parameters.getRawParameterValue("lrLPFCutoff");
-    lrHPFParameter =  parameters.getRawParameterValue("lrHPFCutoff");
-    inputLPFCutoffParameter = parameters.getRawParameterValue("inputLPFCutoff"); 
-    inputHPFCutoffParameter = parameters.getRawParameterValue("inputHPFCutoff");
-    shimmerLevelParameter = parameters.getRawParameterValue("shimmerLevel");
-    shimmerTranspositionParameter = parameters.getRawParameterValue("shimmerTransposition");
-    interpolationTypeParameter = parameters.getRawParameterValue("interpolationType");
-    feedbackDriveParameter = parameters.getRawParameterValue("feedbackDrive");
-    monoLowParameter = parameters.getRawParameterValue("monoLow");
-    earlyReflectionTypeParameter = parameters.getRawParameterValue("earlyReflectionType");
-    
-    setReverbParameters();
 }
 
 Sjf_verbAudioProcessor::~Sjf_verbAudioProcessor()
@@ -117,9 +97,7 @@ void Sjf_verbAudioProcessor::changeProgramName (int index, const juce::String& n
 //==============================================================================
 void Sjf_verbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    rev.initialise( sampleRate, getTotalNumInputChannels(), getTotalNumOutputChannels(), samplesPerBlock);
-    
-    setReverbParameters();
+    m_rev.initialise( sampleRate, std::max( getTotalNumInputChannels(), getTotalNumOutputChannels() ) );
 }
 
 void Sjf_verbAudioProcessor::releaseResources()
@@ -165,9 +143,9 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
         buffer.clear (i, 0, buffer.getNumSamples());
     }
     
-    setReverbParameters();
-    
-    rev.processAudio( buffer );
+//    setReverbParameters();
+//
+    m_rev.process( buffer );
 }
 
 //==============================================================================
@@ -178,13 +156,14 @@ bool Sjf_verbAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* Sjf_verbAudioProcessor::createEditor()
 {
-    return new Sjf_verbAudioProcessorEditor (*this, parameters);
+    return new juce::GenericAudioProcessorEditor( *this );
+//    return new Sjf_verbAudioProcessorEditor (*this, valueTreeState);
 }
 
 //==============================================================================
 void Sjf_verbAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    auto state = parameters.copyState();
+    auto state = valueTreeState.copyState();
     std::unique_ptr<juce::XmlElement> xml (state.createXml());
     copyXmlToBinary (*xml, destData);
 }
@@ -193,34 +172,10 @@ void Sjf_verbAudioProcessor::setStateInformation (const void* data, int sizeInBy
 {
     std::unique_ptr<juce::XmlElement> xmlState (getXmlFromBinary (data, sizeInBytes));
     if (xmlState.get() != nullptr)
-        if (xmlState->hasTagName (parameters.state.getType()))
+        if (xmlState->hasTagName (valueTreeState.state.getType()))
         {
-            parameters.replaceState (juce::ValueTree::fromXml (*xmlState));
+            valueTreeState.replaceState (juce::ValueTree::fromXml (*xmlState));
         }
-}
-//==============================================================================
-void Sjf_verbAudioProcessor::setReverbParameters()
-{
-    auto sampleRate = getSampleRate();
-    rev.setSize( *sizeParameter );
-    rev.setDiffusion( *diffusionParameter );
-    rev.setPreDelay( *preDelayParameter * 0.001 * sampleRate );
-    rev.reversePredelay( *reverseParameter );
-    rev.setModulationRate( *modulationRateParameter ); 
-    rev.setModulationDepth( *modulationDepthParameter );
-    rev.setModulationType( *modulationTypeParameter );
-    rev.setDecay( *decayParameter );
-    rev.setMix( *mixParameter );
-    rev.setLrLPFCutoff( calculateLPFCoefficient< float >( *lrLPFParameter, sampleRate ) );
-    rev.setLrHPFCutoff( calculateLPFCoefficient< float >( *lrHPFParameter, sampleRate ) );
-    rev.setinputLPFCutoff( calculateLPFCoefficient< float >( *inputLPFCutoffParameter, sampleRate ) );
-    rev.setinputHPFCutoff( calculateLPFCoefficient< float >( *inputHPFCutoffParameter, sampleRate ) ); 
-    rev.setShimmerLevel( *shimmerLevelParameter );
-    rev.setShimmerTransposition( *shimmerTranspositionParameter );
-    rev.setInterpolationType( *interpolationTypeParameter );
-    rev.setfeedbackDrive( *feedbackDriveParameter );
-    rev.setMonoLow( *monoLowParameter );
-    rev.setEarlyReflectionType( *earlyReflectionTypeParameter );
 }
 //==============================================================================
 // This creates new instances of the plugin..
@@ -230,54 +185,14 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 }
 
 
-//==============================================================================
+
+
+
 juce::AudioProcessorValueTreeState::ParameterLayout Sjf_verbAudioProcessor::createParameterLayout()
 {
-    juce::AudioProcessorValueTreeState::ParameterLayout params;
-    
-    static constexpr int pIDVersionNumber = 1;
-    
-    juce::NormalisableRange < float > preDelayRange( 1.0f, 1000.0f, 0.001f );
-    preDelayRange.setSkewForCentre(50);
-    juce::NormalisableRange < float > CutoffRange( 20.0f, 20000.0f, 0.001f );
-    CutoffRange.setSkewForCentre( 1000.0f );
-    juce::NormalisableRange < float > modRateRange( 0.0001f, 100.0f, 0.0001f );
-    modRateRange.setSkewForCentre( 1.0f );
-    
-    juce::NormalisableRange < float > modDepthRange( 0.00f, 100.0f, 0.001f );
-    modDepthRange.setSkewForCentre( 10.0f );
-    
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "inputLPFCutoff", pIDVersionNumber }, "InputLPFCutoff", CutoffRange, 20000.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "inputHPFCutoff", pIDVersionNumber }, "InputHPFCutoff", CutoffRange, 20.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "preDelay", pIDVersionNumber }, "PreDelay", preDelayRange, 20.0f) );
-    params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ "reverse", pIDVersionNumber }, "Reverse", false) );
-    
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "size", pIDVersionNumber }, "Size", 0.0f, 100.0f, 80.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "diffusion", pIDVersionNumber }, "Diffusion", 0.0f, 100.0f, 80.0f) );
-    params.add( std::make_unique<juce::AudioParameterInt> (juce::ParameterID{ "earlyReflectionType", pIDVersionNumber }, "EarlyReflectionType", 1, 4, 1) );
-    
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "decay", pIDVersionNumber }, "Decay", 0.0f, 100.0f, 80.0f) );
-    params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ "feedbackDrive", pIDVersionNumber }, "feedbackDrive", false) );
-    
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "lrLPFCutoff", pIDVersionNumber }, "LrLPFCutoff", CutoffRange, 20000.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "lrHPFCutoff", pIDVersionNumber }, "LrHPFCutoff", CutoffRange, 10.0f) );
-    
-    params.add( std::make_unique<juce::AudioParameterFloat> ( juce::ParameterID{ "modulationRate", pIDVersionNumber }, "ModulationRate", modRateRange, 1.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "modulationDepth", pIDVersionNumber }, "ModulationDepth", modDepthRange, 0.0f) );
-    params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ "modulationType", pIDVersionNumber }, "ModulationType", false) );
-    
-    
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "shimmerLevel", pIDVersionNumber }, "ShimmerLevel", 0.0f, 100.0f, 0.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "shimmerTransposition", pIDVersionNumber }, "ShimmerTransposition", -12.0f, 12.0f, 12.0f) );
-    
-    params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ "monoLow", pIDVersionNumber }, "MonoLow", false) );
-    params.add( std::make_unique<juce::AudioParameterInt> (juce::ParameterID{ "interpolationType", pIDVersionNumber }, "InterpolationType", 1, 6, 1) );
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ "mix", pIDVersionNumber }, "Mix", 0.0f, 100.0f, 100.0f) );
-    
-    
-    
+//    juce::AudioProcessorValueTreeState::ParameterLayout params;
+//
+//    return params;
 
-    
-    return params;
+    return sjf_verb< SAMPLETYPE >::createParameterLayout();
 }
-//==============================================================================

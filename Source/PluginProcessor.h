@@ -9,9 +9,9 @@
 #pragma once
 
 #include <JuceHeader.h>
-#include "../sjf_audio/sjf_zitaRev.h"
-#include "../sjf_audio/sjf_audioUtilities.h"
+#include "sjf_verb.h"
 
+#define SAMPLETYPE float
 //==============================================================================
 /**
 */
@@ -58,45 +58,39 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    
-    
-    
-    
-//    void setRevType( const bool& trueForType2 )
-//    {
-//        m_revtype = trueForType2;
-//    }
-    
 private:
-    void setReverbParameters();
+    
+//    void setReverbParameters();
     juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
     
-    sjf_zitaRev< float > rev;
+//    sjf_zitaRev< float > rev;
     
-    juce::AudioProcessorValueTreeState parameters;
+    juce::AudioProcessorValueTreeState valueTreeState;
     
-    std::atomic<float>* mixParameter = nullptr;
-    std::atomic<float>* preDelayParameter = nullptr;
-    std::atomic<float>* reverseParameter = nullptr;
-    std::atomic<float>* sizeParameter = nullptr;
-    std::atomic<float>* diffusionParameter = nullptr;
-    std::atomic<float>* modulationRateParameter = nullptr;
-    std::atomic<float>* modulationDepthParameter = nullptr;
-    std::atomic<float>* modulationTypeParameter = nullptr;
-    std::atomic<float>* decayParameter = nullptr;
-    std::atomic<float>* lrHPFParameter = nullptr;
-    std::atomic<float>* lrLPFParameter = nullptr;
-    std::atomic<float>* inputLPFCutoffParameter = nullptr;
-    std::atomic<float>* inputHPFCutoffParameter = nullptr;
-    std::atomic<float>* shimmerLevelParameter = nullptr;
-    std::atomic<float>* shimmerTranspositionParameter = nullptr;
-    std::atomic<float>* interpolationTypeParameter = nullptr;
-    std::atomic<float>* feedbackDriveParameter = nullptr;
-    std::atomic<float>* monoLowParameter = nullptr;
-    std::atomic<float>* earlyReflectionTypeParameter = nullptr;
-    
+//    std::atomic<float>* mixParameter = nullptr;
+//    std::atomic<float>* preDelayParameter = nullptr;
+//    std::atomic<float>* reverseParameter = nullptr;
+//    std::atomic<float>* sizeParameter = nullptr;
+//    std::atomic<float>* diffusionParameter = nullptr;
+//    std::atomic<float>* modulationRateParameter = nullptr;
+//    std::atomic<float>* modulationDepthParameter = nullptr;
+//    std::atomic<float>* modulationTypeParameter = nullptr;
+//    std::atomic<float>* decayParameter = nullptr;
+//    std::atomic<float>* lrHPFParameter = nullptr;
+//    std::atomic<float>* lrLPFParameter = nullptr;
+//    std::atomic<float>* inputLPFCutoffParameter = nullptr;
+//    std::atomic<float>* inputHPFCutoffParameter = nullptr;
+//    std::atomic<float>* shimmerLevelParameter = nullptr;
+//    std::atomic<float>* shimmerTranspositionParameter = nullptr;
+//    std::atomic<float>* interpolationTypeParameter = nullptr;
+//    std::atomic<float>* feedbackDriveParameter = nullptr;
+//    std::atomic<float>* monoLowParameter = nullptr;
+//    std::atomic<float>* earlyReflectionTypeParameter = nullptr;
+//
 //    bool m_revtype = false;
     
+    
+    sjf_verb< SAMPLETYPE > m_rev;
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Sjf_verbAudioProcessor)
 };

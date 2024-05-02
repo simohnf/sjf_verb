@@ -5,18 +5,6 @@
               pluginFormats="buildAU,buildAUv3,buildVST3" pluginManufacturer="sjf"
               companyName="sjf" displaySplashScreen="1">
   <MAINGROUP id="eiPGLS" name="sjf_verb">
-    <GROUP id="{D425B262-D6D0-A5D5-1F93-32885EE03132}" name="New Group">
-      <FILE id="JwLIQD" name="primes1.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes1.png"
-            xcodeResource="1"/>
-      <FILE id="yVpa5Y" name="primes2.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes2.png"
-            xcodeResource="1"/>
-      <FILE id="kOxIc4" name="primes3.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes3.png"
-            xcodeResource="1"/>
-      <FILE id="iztyyZ" name="primes4.png" compile="0" resource="1" file="../sjf_audio/algoImages/primes4.png"
-            xcodeResource="1"/>
-      <FILE id="oCyWUx" name="Tree1.png" compile="0" resource="1" file="../sjf_audio/algoImages/Tree1.png"
-            xcodeResource="1"/>
-    </GROUP>
     <GROUP id="{BCFA9A7E-307F-AA40-0015-B88FA608841E}" name="Source">
       <FILE id="WLYZzj" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
@@ -26,6 +14,11 @@
             file="Source/PluginEditor.cpp"/>
       <FILE id="cJwnzx" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
     </GROUP>
+    <FILE id="SF2G3x" name="dspWrapper.cpp" compile="1" resource="0" file="Source/dspWrapper.cpp"/>
+    <FILE id="hcJEQf" name="dspWrapper.h" compile="0" resource="0" file="Source/dspWrapper.h"/>
+    <FILE id="MJGHdC" name="parameterIDs.h" compile="0" resource="0" file="Source/parameterIDs.h"/>
+    <FILE id="LxDhmL" name="sjf_verb.cpp" compile="1" resource="0" file="Source/sjf_verb.cpp"/>
+    <FILE id="c2mBQl" name="sjf_verb.h" compile="0" resource="0" file="Source/sjf_verb.h"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
