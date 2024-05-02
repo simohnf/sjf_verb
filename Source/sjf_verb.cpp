@@ -14,7 +14,10 @@
 #include "../sjf_audio/sjf_lpf.h"
 
 
-
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
 template< typename Sample >
 void sjf_verb< Sample >::initialise( Sample sampleRate, int numberOfChannels )
@@ -26,17 +29,37 @@ void sjf_verb< Sample >::initialise( Sample sampleRate, int numberOfChannels )
         s.setCurrentAndTargetValue( s.getTargetValue() );
     }
     
-    m_dspWrap.initialise( m_SR, numberOfChannels );
+    auto nChans = m_dspWrap.initialise( m_SR, numberOfChannels );
+    m_samples.resize( nChans, 0 );
     
 }
-
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
 template < typename Sample >
 void sjf_verb< Sample >::process( juce::AudioBuffer< Sample >& buffer )
 {
     m_paramHandler.triggerCallbacks();
-    m_dspWrap.processBlock( buffer );
+    
+    auto blockSize = buffer.getNumSamples();
+    auto channels = buffer.getNumChannels();
+    for ( auto s = 0; s < blockSize; s++ )
+    {
+        // do smoothed value stuff here
+        for ( auto c = 0; c < channels; c++ )
+            m_samples[ c ] = buffer.getSample( c, s );
+        m_dspWrap.erFunc( m_samples );
+        m_dspWrap.lrFunc( m_samples );
+        for ( auto c = 0; c < channels; c++ )
+            buffer.setSample( c, s, m_samples[ c ] );
+    }
 }
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
 template < typename Sample >
 void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeState &vts,  juce::Array<juce::AudioProcessorParameter*>& params )
@@ -85,6 +108,10 @@ void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeSt
             } );
     }
 }
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
 template < typename Sample >
 juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb< Sample >::createParameterLayout( )
@@ -143,22 +170,28 @@ juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb< Sample >::createPa
     return params;
 }
 
-
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 template< typename Sample >
-void sjf_verb< Sample >::DSP_wrapper::initialise( Sample sampleRate, int numberOfChannels )
+unsigned sjf_verb< Sample >::DSP_wrapper::initialise( Sample sampleRate, int numberOfChannels )
 {
     NCHANNELS = numberOfChannels;
     initialiseEarlyDSP( sampleRate );
     initialiseLateDSP( sampleRate );
     
-    setDSPFunction();
+    return std::max(std::max( NCHANNELS, rdd_NCHANNELS ), fdn_NCHANNELS );
 }
-
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
 template< typename Sample >
 void sjf_verb< Sample >::DSP_wrapper::initialiseEarlyDSP( Sample sampleRate )
@@ -175,7 +208,10 @@ void sjf_verb< Sample >::DSP_wrapper::initialiseEarlyDSP( Sample sampleRate )
     
 }
 
-
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 template< typename Sample >
 void sjf_verb< Sample >::DSP_wrapper::initialiseLateDSP( Sample sampleRate )
 {
@@ -185,7 +221,10 @@ void sjf_verb< Sample >::DSP_wrapper::initialiseLateDSP( Sample sampleRate )
         m_apLoop->initialise( sampleRate );
 }
 
-
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 template< typename Sample >
 void sjf_verb< Sample >::DSP_wrapper::setEarlyType( parameterIDs::earlyTypesEnum type, Sample sampleRate )
 {
@@ -194,18 +233,29 @@ void sjf_verb< Sample >::DSP_wrapper::setEarlyType( parameterIDs::earlyTypesEnum
             m_rotDelDif = std::make_unique< sjf::rev::rotDelDif< Sample > >( rdd_NCHANNELS, rdd_NSTAGES );
             m_multiTap.clear();
             m_seriesAP.clear();
+            erFunc = [ this ]( std::vector< Sample >& samples ) { m_rotDelDif->processInPlace( samples, m_interpType ); };
             break;
         case parameterIDs::earlyTypesEnum::multitap :
             m_rotDelDif.reset();
             for( auto c = 0; c < NCHANNELS; c ++ )
                 m_multiTap.push_back( std::make_unique< sjf::rev::multiTap< Sample > >( mt_NTAPS ) );
             m_seriesAP.clear();
+            erFunc = [ this ]( std::vector< Sample >& samples )
+            {
+                for ( auto c = 0; c < NCHANNELS; c++ )
+                    samples[ c ] = m_multiTap[ c ]->process( samples[ c ], m_interpType );
+            };
             break;
         case parameterIDs::earlyTypesEnum::seriesAP  :
             m_rotDelDif.reset();
             m_multiTap.clear();
             for( auto c = 0; c < NCHANNELS; c++ )
                 m_seriesAP.push_back( std::make_unique< sjf::rev::seriesAllpass< Sample > >( sap_NSTAGES ) );
+            erFunc = [ this ]( std::vector< Sample >& samples )
+            {
+                for ( auto c = 0; c < NCHANNELS; c++ )
+                    samples[ c ] = m_seriesAP[ c ]->process( samples[ c ], m_interpType );
+            };
             break;
         case parameterIDs::earlyTypesEnum::mt_sAP :
             m_rotDelDif.reset();
@@ -214,14 +264,29 @@ void sjf_verb< Sample >::DSP_wrapper::setEarlyType( parameterIDs::earlyTypesEnum
                 m_multiTap.push_back( std::make_unique< sjf::rev::multiTap< Sample > >( mt_NTAPS ) );
                 m_seriesAP.push_back( std::make_unique< sjf::rev::seriesAllpass< Sample > >( sap_NSTAGES ) );
             }
+            erFunc = [ this ]( std::vector< Sample >& samples )
+            {
+                for ( auto c = 0; c < NCHANNELS; c++ )
+                {
+                    samples[ c ] = m_multiTap[ c ]->process( samples[ c ], m_interpType );
+                    samples[ c ] = m_seriesAP[ c ]->process( samples[ c ], m_interpType );
+                }
+            };
             break;
         default:
+            erFunc = [ this ]( std::vector< Sample >& samples ) { return; };
             break;
     }
     initialiseEarlyDSP( sampleRate );
-    setDSPFunction();
+    
+
+//    setDSPFunction();
 }
 
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
 template< typename Sample >
 void sjf_verb< Sample >::DSP_wrapper::setLateType( parameterIDs::lateTypesEnum type, Sample sampleRate )
@@ -230,25 +295,56 @@ void sjf_verb< Sample >::DSP_wrapper::setLateType( parameterIDs::lateTypesEnum t
         case parameterIDs::lateTypesEnum::fdn :
             m_fdn = std::make_unique< sjf::rev::fdn< Sample > >( fdn_NCHANNELS );
             m_apLoop.reset();
+            lrFunc = [ this ]( std::vector< Sample >& samples ) { m_fdn->processInPlace( samples, sjf::rev::fdn< Sample >::mixers::hadamard, m_interpType ); };
             break;
         case parameterIDs::lateTypesEnum::apLoop :
             m_fdn.reset();
             m_apLoop = std::make_unique< sjf::rev::allpassLoop< Sample > >( apl_NSTAGES, apl_NAP_PERSTAGE );
+            lrFunc = [ this ]( std::vector< Sample >& samples ) { m_apLoop->processInPlace( samples, m_interpType ); };
             break;
         default:
+            lrFunc = [ this ]( std::vector< Sample >& samples ) { return; };
             break;
             
     }
     initialiseLateDSP( sampleRate );
-    setDSPFunction();
+//    setDSPFunction();
 }
 
-
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
 template< typename Sample >
 void sjf_verb< Sample >::DSP_wrapper::setInterpolationType( parameterIDs::interpTypesEnum type )
 {
-    
+    switch ( type ) {
+        case parameterIDs::interpTypesEnum::none :
+            m_interpType = 0;
+            break;
+        case parameterIDs::interpTypesEnum::linear :
+            m_interpType = sjf_interpolators::interpolatorTypes::linear;
+            break;
+        case parameterIDs::interpTypesEnum::cubic :
+            m_interpType = sjf_interpolators::interpolatorTypes::cubic;
+            break;
+        case parameterIDs::interpTypesEnum::pureData :
+            m_interpType = sjf_interpolators::interpolatorTypes::pureData;
+            break;
+        case parameterIDs::interpTypesEnum::fourthOrder :
+            m_interpType = sjf_interpolators::interpolatorTypes::fourthOrder;
+            break;
+        case parameterIDs::interpTypesEnum::godot :
+            m_interpType = sjf_interpolators::interpolatorTypes::godot;
+            break;
+        case parameterIDs::interpTypesEnum::hermite :
+            m_interpType = sjf_interpolators::interpolatorTypes::hermite;
+            break;
+        default:
+            m_interpType = 0;
+            break;
+    }
 }
 
 
@@ -259,175 +355,175 @@ void sjf_verb< Sample >::DSP_wrapper::setInterpolationType( parameterIDs::interp
 //}
 
 
-template< typename Sample >
-void sjf_verb< Sample >::DSP_wrapper::setDSPFunction( )
-{
-    if( m_rotDelDif && m_fdn)
-    {
-        processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
-        {
-            std::vector< Sample > samples( std::max( rdd_NCHANNELS, fdn_NCHANNELS), 0 );
-            auto blockSize = buffer.getNumSamples();
-            for( auto s = 0; s < blockSize; s++ )
-            {
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                    samples[ c ] = buffer.getSample( c, s );
-                m_rotDelDif->processInPlace( samples );
-                m_fdn->processInPlace( samples );
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                    buffer.setSample( c, s, samples[ c ] );
-            }
-        };
-        return;
-    }
-    if( m_rotDelDif && m_apLoop )
-    {
-        processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
-        {
-            std::vector< Sample > samples(  rdd_NCHANNELS, 0 );
-            auto blockSize = buffer.getNumSamples();
-            for( auto s = 0; s < blockSize; s++ )
-            {
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                    samples[ c ] = buffer.getSample( c, s );
-                m_rotDelDif->processInPlace( samples );
-                m_apLoop->processInPlace( samples );
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                    buffer.setSample( c, s, samples[ c ] );
-            }
-        };
-        return;
-    }
-    if ( m_multiTap.size() != 0 && m_seriesAP.size() != 0 && m_fdn )
-    {
-        processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
-        {
-            std::vector< Sample > samples( fdn_NCHANNELS, 0);
-            auto blockSize = buffer.getNumSamples();
-            for( auto s = 0; s < blockSize; s++ )
-            {
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                {
-                    samples[ c ] = buffer.getSample( c, s );
-                    m_multiTap[ c ]->process( samples[ c ] );
-                    m_seriesAP[ c ]->process( samples[ c ] );
-                }
-                m_fdn->processInPlace( samples );
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                    buffer.setSample( c, s, samples[ c ] );
-            }
-        };
-        return;
-    }
-    if( m_multiTap.size() != 0 && m_seriesAP.size() != 0 && m_apLoop )
-    {
-        processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
-        {
-            std::vector< Sample > samples( NCHANNELS, 0);
-            auto blockSize = buffer.getNumSamples();
-            for( auto s = 0; s < blockSize; s++ )
-            {
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                {
-                    samples[ c ] = buffer.getSample( c, s );
-                    m_multiTap[ c ]->process( samples[ c ] );
-                    m_seriesAP[ c ]->process( samples[ c ] );
-                }
-                m_apLoop->processInPlace( samples );
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                    buffer.setSample( c, s, samples[ c ] );
-            }
-        };
-        return;
-    }
-    if( m_multiTap.size() != 0 )
-    {
-        if( m_fdn )
-        {
-            processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
-            {
-                std::vector< Sample > samples( fdn_NCHANNELS, 0);
-                auto blockSize = buffer.getNumSamples();
-                for( auto s = 0; s < blockSize; s++ )
-                {
-                    for ( auto c = 0; c < NCHANNELS; c++ )
-                    {
-                        samples[ c ] = buffer.getSample( c, s );
-                        m_multiTap[ c ]->process( samples[ c ] );
-                    }
-                    m_fdn->processInPlace( samples );
-                    for ( auto c = 0; c < NCHANNELS; c++ )
-                        buffer.setSample( c, s, samples[ c ] );
-                }
-            };
-            return;
-        }
-        if( m_apLoop )
-        {
-            processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
-            {
-                std::vector< Sample > samples( NCHANNELS, 0);
-                auto blockSize = buffer.getNumSamples();
-                for( auto s = 0; s < blockSize; s++ )
-                {
-                    for ( auto c = 0; c < NCHANNELS; c++ )
-                    {
-                        samples[ c ] = buffer.getSample( c, s );
-                        m_multiTap[ c ]->process( samples[ c ] );
-                    }
-                    m_apLoop->processInPlace( samples );
-                    for ( auto c = 0; c < NCHANNELS; c++ )
-                        buffer.setSample( c, s, samples[ c ] );
-                }
-            };
-            return;
-        }
-    }
-    if( m_seriesAP.size() != 0 )
-    {
-        if( m_fdn )
-        {
-            processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
-            {
-                std::vector< Sample > samples( fdn_NCHANNELS, 0);
-                auto blockSize = buffer.getNumSamples();
-                for( auto s = 0; s < blockSize; s++ )
-                {
-                    for ( auto c = 0; c < NCHANNELS; c++ )
-                    {
-                        samples[ c ] = buffer.getSample( c, s );
-                        m_seriesAP[ c ]->process( samples[ c ] );
-                    }
-                    m_fdn->processInPlace( samples );
-                    for ( auto c = 0; c < NCHANNELS; c++ )
-                        buffer.setSample( c, s, samples[ c ] );
-                }
-            };
-            return;
-        }
-        if( m_apLoop )
-        {
-            processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
-            {
-                std::vector< Sample > samples( NCHANNELS, 0);
-                auto blockSize = buffer.getNumSamples();
-                for( auto s = 0; s < blockSize; s++ )
-                {
-                    for ( auto c = 0; c < NCHANNELS; c++ )
-                    {
-                        samples[ c ] = buffer.getSample( c, s );
-                        m_seriesAP[ c ]->process( samples[ c ] );
-                    }
-                    m_apLoop->processInPlace( samples );
-                    for ( auto c = 0; c < NCHANNELS; c++ )
-                        buffer.setSample( c, s, samples[ c ] );
-                }
-            };
-            return;
-        }
-    }
-        
-}
+//template< typename Sample >
+//void sjf_verb< Sample >::DSP_wrapper::setDSPFunction( )
+//{
+//    if( m_rotDelDif && m_fdn)
+//    {
+//        processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
+//        {
+//            std::vector< Sample > samples( std::max( rdd_NCHANNELS, fdn_NCHANNELS), 0 );
+//            auto blockSize = buffer.getNumSamples();
+//            for( auto s = 0; s < blockSize; s++ )
+//            {
+//                for ( auto c = 0; c < NCHANNELS; c++ )
+//                    samples[ c ] = buffer.getSample( c, s );
+//                m_rotDelDif->processInPlace( samples );
+//                m_fdn->processInPlace( samples );
+//                for ( auto c = 0; c < NCHANNELS; c++ )
+//                    buffer.setSample( c, s, samples[ c ] );
+//            }
+//        };
+//        return;
+//    }
+//    if( m_rotDelDif && m_apLoop )
+//    {
+//        processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
+//        {
+//            std::vector< Sample > samples(  rdd_NCHANNELS, 0 );
+//            auto blockSize = buffer.getNumSamples();
+//            for( auto s = 0; s < blockSize; s++ )
+//            {
+//                for ( auto c = 0; c < NCHANNELS; c++ )
+//                    samples[ c ] = buffer.getSample( c, s );
+//                m_rotDelDif->processInPlace( samples );
+//                m_apLoop->processInPlace( samples );
+//                for ( auto c = 0; c < NCHANNELS; c++ )
+//                    buffer.setSample( c, s, samples[ c ] );
+//            }
+//        };
+//        return;
+//    }
+//    if ( m_multiTap.size() != 0 && m_seriesAP.size() != 0 && m_fdn )
+//    {
+//        processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
+//        {
+//            std::vector< Sample > samples( fdn_NCHANNELS, 0);
+//            auto blockSize = buffer.getNumSamples();
+//            for( auto s = 0; s < blockSize; s++ )
+//            {
+//                for ( auto c = 0; c < NCHANNELS; c++ )
+//                {
+//                    samples[ c ] = buffer.getSample( c, s );
+//                    m_multiTap[ c ]->process( samples[ c ] );
+//                    m_seriesAP[ c ]->process( samples[ c ] );
+//                }
+//                m_fdn->processInPlace( samples );
+//                for ( auto c = 0; c < NCHANNELS; c++ )
+//                    buffer.setSample( c, s, samples[ c ] );
+//            }
+//        };
+//        return;
+//    }
+//    if( m_multiTap.size() != 0 && m_seriesAP.size() != 0 && m_apLoop )
+//    {
+//        processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
+//        {
+//            std::vector< Sample > samples( NCHANNELS, 0);
+//            auto blockSize = buffer.getNumSamples();
+//            for( auto s = 0; s < blockSize; s++ )
+//            {
+//                for ( auto c = 0; c < NCHANNELS; c++ )
+//                {
+//                    samples[ c ] = buffer.getSample( c, s );
+//                    m_multiTap[ c ]->process( samples[ c ] );
+//                    m_seriesAP[ c ]->process( samples[ c ] );
+//                }
+//                m_apLoop->processInPlace( samples );
+//                for ( auto c = 0; c < NCHANNELS; c++ )
+//                    buffer.setSample( c, s, samples[ c ] );
+//            }
+//        };
+//        return;
+//    }
+//    if( m_multiTap.size() != 0 )
+//    {
+//        if( m_fdn )
+//        {
+//            processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
+//            {
+//                std::vector< Sample > samples( fdn_NCHANNELS, 0);
+//                auto blockSize = buffer.getNumSamples();
+//                for( auto s = 0; s < blockSize; s++ )
+//                {
+//                    for ( auto c = 0; c < NCHANNELS; c++ )
+//                    {
+//                        samples[ c ] = buffer.getSample( c, s );
+//                        m_multiTap[ c ]->process( samples[ c ] );
+//                    }
+//                    m_fdn->processInPlace( samples );
+//                    for ( auto c = 0; c < NCHANNELS; c++ )
+//                        buffer.setSample( c, s, samples[ c ] );
+//                }
+//            };
+//            return;
+//        }
+//        if( m_apLoop )
+//        {
+//            processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
+//            {
+//                std::vector< Sample > samples( NCHANNELS, 0);
+//                auto blockSize = buffer.getNumSamples();
+//                for( auto s = 0; s < blockSize; s++ )
+//                {
+//                    for ( auto c = 0; c < NCHANNELS; c++ )
+//                    {
+//                        samples[ c ] = buffer.getSample( c, s );
+//                        m_multiTap[ c ]->process( samples[ c ] );
+//                    }
+//                    m_apLoop->processInPlace( samples );
+//                    for ( auto c = 0; c < NCHANNELS; c++ )
+//                        buffer.setSample( c, s, samples[ c ] );
+//                }
+//            };
+//            return;
+//        }
+//    }
+//    if( m_seriesAP.size() != 0 )
+//    {
+//        if( m_fdn )
+//        {
+//            processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
+//            {
+//                std::vector< Sample > samples( fdn_NCHANNELS, 0);
+//                auto blockSize = buffer.getNumSamples();
+//                for( auto s = 0; s < blockSize; s++ )
+//                {
+//                    for ( auto c = 0; c < NCHANNELS; c++ )
+//                    {
+//                        samples[ c ] = buffer.getSample( c, s );
+//                        m_seriesAP[ c ]->process( samples[ c ] );
+//                    }
+//                    m_fdn->processInPlace( samples );
+//                    for ( auto c = 0; c < NCHANNELS; c++ )
+//                        buffer.setSample( c, s, samples[ c ] );
+//                }
+//            };
+//            return;
+//        }
+//        if( m_apLoop )
+//        {
+//            processBlock = [ this ]( juce::AudioBuffer<Sample>& buffer )
+//            {
+//                std::vector< Sample > samples( NCHANNELS, 0);
+//                auto blockSize = buffer.getNumSamples();
+//                for( auto s = 0; s < blockSize; s++ )
+//                {
+//                    for ( auto c = 0; c < NCHANNELS; c++ )
+//                    {
+//                        samples[ c ] = buffer.getSample( c, s );
+//                        m_seriesAP[ c ]->process( samples[ c ] );
+//                    }
+//                    m_apLoop->processInPlace( samples );
+//                    for ( auto c = 0; c < NCHANNELS; c++ )
+//                        buffer.setSample( c, s, samples[ c ] );
+//                }
+//            };
+//            return;
+//        }
+//    }
+//        
+//}
 
 
 

@@ -49,7 +49,7 @@ private:
             m_fdn.reset();
         }
         
-        void initialise( Sample sampleRate, int numberOfChannels );
+        unsigned initialise( Sample sampleRate, int numberOfChannels );
         
         void setEarlyType( parameterIDs::earlyTypesEnum type, Sample sampleRate );
         void setLateType( parameterIDs::lateTypesEnum type, Sample sampleRate );
@@ -60,9 +60,13 @@ private:
         void initialiseLateDSP( Sample sampleRate );
         
         std::function< void( juce::AudioBuffer< Sample >& ) > processBlock;
+        
+        std::function< void( std::vector< Sample >& samples ) > erFunc { [ this ]( std::vector< Sample >& samples ) { return; } };
+        std::function< void( std::vector< Sample >& samples ) > lrFunc { [ this ]( std::vector< Sample >& samples ) { return; } };
+        
     private:
         
-        void setDSPFunction( );
+        void setDSPFunctions( );
         
         std::unique_ptr< sjf::rev::rotDelDif< Sample > > m_rotDelDif;
         std::vector< std::unique_ptr< sjf::rev::multiTap< Sample > > > m_multiTap;
@@ -77,7 +81,7 @@ private:
         unsigned apl_NSTAGES{6}, apl_NAP_PERSTAGE{2};
         unsigned fdn_NCHANNELS{8};
         
-        int NCHANNELS = 2;
+        unsigned NCHANNELS = 2;
     };
     
     
@@ -92,5 +96,6 @@ private:
     
     DSP_wrapper m_dspWrap;
     
+    std::vector< Sample > m_samples;
 };
 
