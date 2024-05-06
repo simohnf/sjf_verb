@@ -11,6 +11,7 @@
 #pragma once
 
 #include "../sjf_audio/sjf_audioUtilities.h"
+#include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_parameterHandler.h"
 #include "../sjf_audio/sjf_rev.h"
 #include "../sjf_audio/sjf_lpf.h"
@@ -22,13 +23,12 @@ template < typename Sample >
 class sjf_verb
 {
 public:
-    sjf_verb(){}
-    ~sjf_verb()
-    {
-        m_smoothers.clear();
-    }
+//    typedef <#type#> <#name#>;
     
-    void process( juce::AudioBuffer<Sample>& buffer );
+    sjf_verb(){}
+    ~sjf_verb() { m_smoothers.clear(); }
+    
+    inline void process( juce::AudioBuffer<Sample>& buffer );
     
     void addParametersToHandler( juce::AudioProcessorValueTreeState &vts, juce::Array<juce::AudioProcessorParameter*>& params  );
     
@@ -59,20 +59,45 @@ private:
         void initialiseEarlyDSP( Sample sampleRate );
         void initialiseLateDSP( Sample sampleRate );
         
-        std::function< void( juce::AudioBuffer< Sample >& ) > processBlock;
+//        std::function< void( juce::AudioBuffer< Sample >& ) > processBlock;
         
         std::function< void( std::vector< Sample >& samples ) > erFunc { [ this ]( std::vector< Sample >& samples ) { return; } };
         std::function< void( std::vector< Sample >& samples ) > lrFunc { [ this ]( std::vector< Sample >& samples ) { return; } };
         
+        inline void processER( std::vector< Sample >& samples ){ (this->*earlyReflectionsF)( samples ); }
+        inline void processLR( std::vector< Sample >& samples ){ (this->*lateReflectionsF)( samples ); }
+        
+        
     private:
         
+        void ( DSP_wrapper::*earlyReflectionsF )( std::vector< Sample >& ){ &sjf_verb< Sample >::DSP_wrapper::er_default };
+        void ( DSP_wrapper::*lateReflectionsF )( std::vector< Sample >& ){ &sjf_verb< Sample >::DSP_wrapper::lr_default };
+        
+        inline void er_rdd( std::vector< Sample >& );
+        inline void er_mt( std::vector< Sample >& );
+        inline void er_sap( std::vector< Sample >& );
+        inline void er_mtsap( std::vector< Sample >& );
+        inline void er_default( std::vector< Sample >& ){ return; };
+        
+        inline void lr_fdn( std::vector< Sample >& );
+        inline void lr_apLoop( std::vector< Sample >& );
+        inline void lr_default( std::vector< Sample >& ){ return; };
+        
         void setDSPFunctions( );
+        void initialiseDelayTimes( Sample sampleRate );
         
         std::unique_ptr< sjf::rev::rotDelDif< Sample > > m_rotDelDif;
         std::vector< std::unique_ptr< sjf::rev::multiTap< Sample > > > m_multiTap;
         std::vector< std::unique_ptr< sjf::rev::seriesAllpass< Sample > > > m_seriesAP;
         std::unique_ptr< sjf::rev::allpassLoop< Sample > > m_apLoop;
         std::unique_ptr< sjf::rev::fdn< Sample > > m_fdn;
+        
+        
+        std::vector< std::vector< Sample > > m_rotDelDif_DT;
+        std::vector< std::vector< Sample > > m_multiTap_DT;
+        std::vector< std::vector< Sample > > m_seriesAP_DT;
+        std::vector< Sample > m_apLoop_DT;
+        std::vector< Sample > m_fdn_dt;
         
         int m_interpType{1};
         unsigned rdd_NCHANNELS{8}, rdd_NSTAGES{5};
@@ -82,6 +107,10 @@ private:
         unsigned fdn_NCHANNELS{8};
         
         unsigned NCHANNELS = 2;
+        
+        static constexpr sjf::ctr::rArray< Sample, 4096, UNIX_TIMESTAMP > m_vn; // random values for delayTimes
+        
+        Sample m_SR = 44100;
     };
     
     
@@ -97,5 +126,9 @@ private:
     DSP_wrapper m_dspWrap;
     
     std::vector< Sample > m_samples;
+    
+//    static const std::array< int, 10000 > primes;
+    
+    
 };
 
