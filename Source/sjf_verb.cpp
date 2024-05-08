@@ -74,10 +74,12 @@ void sjf_verb< Sample >::process( juce::AudioBuffer< Sample >& buffer )
             m_inSamps[ i ] = m_samples[ i ] = buffer.getSample( i, s );
         for ( auto i = channels; i < m_samples.size(); i++ )
             m_samples[ i ] = 0;
-        m_dspWrap.processER( m_samples );
+//        m_dspWrap.processER( m_samples );
+        m_dspWrap.processEarly( m_samples );
         for ( auto i = 0; i < channels; i++ )
             m_outSamps[ i ] = m_samples[ i ] * m_erLevel;
-        m_dspWrap.processLR( m_samples );
+//        m_dspWrap.processLR( m_samples );
+        m_dspWrap.processLate( m_samples );
         for ( auto i = 0; i < channels; i++ )
             m_outSamps[ i ] += m_samples[ i ] * m_lrLevel;
         for ( auto i = 0; i < channels; i++ )
@@ -465,8 +467,7 @@ void sjf_verb< Sample >::DSP_wrapper::setEarlyType( parameterIDs::earlyTypesEnum
             m_multiTap.clear(); m_multiTap_DT.clear();
             m_multiTapDamp.clear();
             m_seriesAP.clear(); m_seriesAP_DT.clear();
-            erFunc = [ this ]( std::vector< Sample >& samples ) { m_rotDelDif->processInPlace( samples, m_interpType ); };
-            earlyReflectionsF = &sjf_verb< Sample >::DSP_wrapper::er_rdd;
+            processEarly = &DSP_wrapper::er_rdd;
             break;
         case parameterIDs::earlyTypesEnum::multitap :
             m_rotDelDif.reset(); m_rotDelDif_DT.clear();
@@ -474,12 +475,7 @@ void sjf_verb< Sample >::DSP_wrapper::setEarlyType( parameterIDs::earlyTypesEnum
                 m_multiTap.push_back( std::make_unique< sjf::rev::multiTap< Sample > >( mt_NTAPS ) );
             m_multiTapDamp.resize( NCHANNELS );
             m_seriesAP.clear(); m_seriesAP_DT.clear();
-            erFunc = [ this ]( std::vector< Sample >& samples )
-            {
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                    samples[ c ] = m_multiTap[ c ]->process( samples[ c ], m_interpType );
-            };
-            earlyReflectionsF = &sjf_verb< Sample >::DSP_wrapper::er_mt;
+            processEarly = &DSP_wrapper::er_mt;
             break;
         case parameterIDs::earlyTypesEnum::seriesAP  :
             m_rotDelDif.reset(); m_rotDelDif_DT.clear();
@@ -487,12 +483,7 @@ void sjf_verb< Sample >::DSP_wrapper::setEarlyType( parameterIDs::earlyTypesEnum
             m_multiTapDamp.clear();
             for( auto c = 0; c < NCHANNELS; c++ )
                 m_seriesAP.push_back( std::make_unique< sjf::rev::seriesAllpass< Sample > >( sap_NSTAGES ) );
-            erFunc = [ this ]( std::vector< Sample >& samples )
-            {
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                    samples[ c ] = m_seriesAP[ c ]->process( samples[ c ], m_interpType );
-            };
-            earlyReflectionsF = &sjf_verb< Sample >::DSP_wrapper::er_sap;
+            processEarly = &DSP_wrapper::er_sap;
             break;
         case parameterIDs::earlyTypesEnum::mt_sAP :
             m_rotDelDif.reset(); m_rotDelDif_DT.clear();
@@ -502,19 +493,10 @@ void sjf_verb< Sample >::DSP_wrapper::setEarlyType( parameterIDs::earlyTypesEnum
                 m_seriesAP.push_back( std::make_unique< sjf::rev::seriesAllpass< Sample > >( sap_NSTAGES ) );
             }
             m_multiTapDamp.resize( NCHANNELS );
-            erFunc = [ this ]( std::vector< Sample >& samples )
-            {
-                for ( auto c = 0; c < NCHANNELS; c++ )
-                {
-                    samples[ c ] = m_multiTap[ c ]->process( samples[ c ], m_interpType );
-                    samples[ c ] = m_seriesAP[ c ]->process( samples[ c ], m_interpType );
-                }
-            };
-            earlyReflectionsF = &sjf_verb< Sample >::DSP_wrapper::er_mtsap;
+            processEarly = &DSP_wrapper::er_mtsap;
             break;
         default:
-            erFunc = [ this ]( std::vector< Sample >& samples ) { return; };
-            earlyReflectionsF = &sjf_verb< Sample >::DSP_wrapper::er_default;
+            processEarly = &DSP_wrapper::er_default;
             break;
     }
     initialiseEarlyDSP( sampleRate );
@@ -536,17 +518,15 @@ void sjf_verb< Sample >::DSP_wrapper::setLateType( parameterIDs::lateTypesEnum t
         case parameterIDs::lateTypesEnum::fdn :
             m_fdn = std::make_unique< sjf::rev::fdn< Sample > >( fdn_NCHANNELS );
             m_apLoop.reset(); m_apLoop_DT.clear();
-            lrFunc = [ this ]( std::vector< Sample >& samples ) { m_fdn->processInPlace( samples, sjf::rev::fdn< Sample >::mixers::hadamard, m_interpType ); };
-            lateReflectionsF = &sjf_verb< Sample >::DSP_wrapper::lr_fdn;
+            processLate = &DSP_wrapper::lr_fdn;
             break;
         case parameterIDs::lateTypesEnum::apLoop :
             m_fdn.reset(); m_fdn_DT.clear();
             m_apLoop = std::make_unique< sjf::rev::allpassLoop< Sample > >( apl_NSTAGES, apl_NAP_PERSTAGE );
-            lrFunc = [ this ]( std::vector< Sample >& samples ) { m_apLoop->processInPlace( samples, m_interpType ); };
-            lateReflectionsF = &sjf_verb< Sample >::DSP_wrapper::lr_apLoop;
+            processLate = &DSP_wrapper::lr_apLoop;
             break;
         default:
-            lrFunc = [ this ]( std::vector< Sample >& samples ) { return; };
+            processLate = &DSP_wrapper::lr_default;
             break;
     }
     initialiseLateDSP( sampleRate );

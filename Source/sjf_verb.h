@@ -25,7 +25,7 @@ class sjf_verb
 public:
 //    typedef <#type#> <#name#>;
     
-    sjf_verb() : m_dspWrap( this ){}
+    sjf_verb() /*: m_dspWrap( this )*/{}
     ~sjf_verb() { m_smoothers.clear(); }
     
     inline void process( juce::AudioBuffer<Sample>& buffer );
@@ -39,7 +39,7 @@ private:
     class DSP_wrapper
     {
     public:
-        DSP_wrapper( const sjf_verb< Sample >* parent) : /*PARENT( parent ), */ m_modPhasor( 1, m_SR ) {}
+        DSP_wrapper() : m_modPhasor( 1, m_SR ) {}
         ~DSP_wrapper()
         {
             m_rotDelDif.reset();
@@ -59,14 +59,9 @@ private:
         void initialiseEarlyDSP( Sample sampleRate );
         void initialiseLateDSP( Sample sampleRate );
         
-//        std::function< void( juce::AudioBuffer< Sample >& ) > processBlock;
         
-        std::function< void( std::vector< Sample >& samples ) > erFunc { [ this ]( std::vector< Sample >& samples ) { return; } };
-        std::function< void( std::vector< Sample >& samples ) > lrFunc { [ this ]( std::vector< Sample >& samples ) { return; } };
-        
-        inline void processER( std::vector< Sample >& samples ){ (this->*earlyReflectionsF)( samples ); }
-        inline void processLR( std::vector< Sample >& samples ){ (this->*lateReflectionsF)( samples ); }
-        
+        sjf::utilities::classMemberFunctionPointer< DSP_wrapper, void, std::vector< Sample >& > processEarly{this,&DSP_wrapper::er_default};
+        sjf::utilities::classMemberFunctionPointer< DSP_wrapper, void, std::vector< Sample >& > processLate{this,&DSP_wrapper::lr_default};
         // FOR EASY ACCESS BY PARENT CLASS
         Sample m_earlyDiff{0.7}, m_lateDiff{0.5}, m_erDamp{0.2}, m_lrDamp{0.2}, m_decay{1.0}, m_modDepth{0.5}, m_modRate{1.0}, m_modDamp = ( 1.0 - calculateLPFCoefficient( m_modRate, m_SR ) ),  m_size{ 1.0 }, m_modPhase{0};
         int m_interpType{1};
@@ -74,9 +69,6 @@ private:
         sjf::rev::phasor< Sample > m_modPhasor;
         
     private:
-        
-        void ( DSP_wrapper::*earlyReflectionsF )( std::vector< Sample >& ){ &sjf_verb< Sample >::DSP_wrapper::er_default };
-        void ( DSP_wrapper::*lateReflectionsF )( std::vector< Sample >& ){ &sjf_verb< Sample >::DSP_wrapper::lr_default };
         
         inline void er_rdd( std::vector< Sample >& );
         inline void er_mt( std::vector< Sample >& );
