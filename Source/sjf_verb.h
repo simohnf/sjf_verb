@@ -25,7 +25,7 @@ class sjf_verb
 public:
 //    typedef <#type#> <#name#>;
     
-    sjf_verb(){}
+    sjf_verb() : m_dspWrap( this ){}
     ~sjf_verb() { m_smoothers.clear(); }
     
     inline void process( juce::AudioBuffer<Sample>& buffer );
@@ -39,7 +39,7 @@ private:
     class DSP_wrapper
     {
     public:
-        DSP_wrapper(){}
+        DSP_wrapper( const sjf_verb< Sample >* parent) : /*PARENT( parent ), */ m_modPhasor( 1, m_SR ) {}
         ~DSP_wrapper()
         {
             m_rotDelDif.reset();
@@ -67,6 +67,11 @@ private:
         inline void processER( std::vector< Sample >& samples ){ (this->*earlyReflectionsF)( samples ); }
         inline void processLR( std::vector< Sample >& samples ){ (this->*lateReflectionsF)( samples ); }
         
+        // FOR EASY ACCESS BY PARENT CLASS
+        Sample m_earlyDiff{0.7}, m_lateDiff{0.5}, m_erDamp{0.2}, m_lrDamp{0.2}, m_decay{1.0}, m_modDepth{0.5}, m_modRate{1.0}, m_modDamp = ( 1.0 - calculateLPFCoefficient( m_modRate, m_SR ) ),  m_size{ 1.0 }, m_modPhase{0};
+        int m_interpType{1};
+        
+        sjf::rev::phasor< Sample > m_modPhasor;
         
     private:
         
@@ -88,6 +93,7 @@ private:
         
         std::unique_ptr< sjf::rev::rotDelDif< Sample > > m_rotDelDif;
         std::vector< std::unique_ptr< sjf::rev::multiTap< Sample > > > m_multiTap;
+        std::vector< sjf::rev::damper< Sample > > m_multiTapDamp;
         std::vector< std::unique_ptr< sjf::rev::seriesAllpass< Sample > > > m_seriesAP;
         std::unique_ptr< sjf::rev::allpassLoop< Sample > > m_apLoop;
         std::unique_ptr< sjf::rev::fdn< Sample > > m_fdn;
@@ -96,10 +102,10 @@ private:
         std::vector< std::vector< Sample > > m_rotDelDif_DT;
         std::vector< std::vector< Sample > > m_multiTap_DT;
         std::vector< std::vector< Sample > > m_seriesAP_DT;
-        std::vector< Sample > m_apLoop_DT;
-        std::vector< Sample > m_fdn_dt;
+        std::vector< std::vector< Sample > > m_apLoop_DT;
+        std::vector< Sample > m_fdn_DT;
         
-        int m_interpType{1};
+        
         unsigned rdd_NCHANNELS{8}, rdd_NSTAGES{5};
         unsigned mt_NTAPS{32};
         unsigned sap_NSTAGES{8};
@@ -110,22 +116,37 @@ private:
         
         static constexpr sjf::ctr::rArray< Sample, 4096, UNIX_TIMESTAMP > m_vn; // random values for delayTimes
         
-        Sample m_SR = 44100;
+        Sample m_SR{44100};
+        
+//        const sjf_verb< Sample >* PARENT;
+        
+        std::vector< std::vector< sjf::rev::dtModulatorVoice< Sample > > > m_sap_modulators;
+        std::vector< std::vector< sjf::rev::dtModulatorVoice< Sample > > > m_rdd_modulators;
+        
+        std::vector< sjf::rev::dtModulatorVoice< Sample > > m_fdn_modulators;
+        std::vector< std::vector< sjf::rev::dtModulatorVoice< Sample > > > m_apLoop_modulators;
     };
     
+    
+    inline Sample getSmoothedVal( parameterIDs::idsenum idE )
+    {
+        jassert( m_smootherMap.find( idE ) != m_smootherMap.end() );
+        return ( m_smootherMap.find( idE ) )->second->getNextValue();
+    }
     
     
     sjf::parameterHandler::paramHandlerVector m_paramHandler;
     
     std::vector< juce::LinearSmoothedValue< Sample > > m_smoothers;
+//    std::unordered_map<  parameterIDs::idsenum, juce::LinearSmoothedValue< Sample >* > m_smootherMap;
     std::unordered_map<  parameterIDs::idsenum, juce::LinearSmoothedValue< Sample >* > m_smootherMap;
     
     
-    Sample m_SR = 44100;
+    Sample m_SR{44100}, m_erLevel{1.0}, m_lrLevel{1.0}, m_dry{0}, m_wet{1};
     
     DSP_wrapper m_dspWrap;
     
-    std::vector< Sample > m_samples;
+    std::vector< Sample > m_samples, m_outSamps, m_inSamps;
     
 //    static const std::array< int, 10000 > primes;
     

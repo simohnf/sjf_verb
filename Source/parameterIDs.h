@@ -18,25 +18,30 @@ namespace parameterIDs
 
 
     static const juce::String earlyReflectionType = "EarlyReflectionType";
+    static const juce::String earlyReflectionLevel = "EarlyReflectionLevel";
+    
     static const juce::String lateReflectionType = "LateReflectionType";
+    static const juce::String lateReflectionLevel = "LateReflectionLevel";
 
-    static const juce::String mix = "Mix";
-    static const juce::String inputHPFCutoff = "InputHPFCutoff";
-    static const juce::String inputLPFCutoff = "InputLPFCutoff";
-    static const juce::String preDelay = "PreDelay";
+    static const juce::String mix = "Mix"; //y
+    static const juce::String inputHPFCutoff = "InputHPFCutoff"; //y
+    static const juce::String inputLPFCutoff = "InputLPFCutoff"; //y
+    static const juce::String preDelay = "PreDelay"; //y
     static const juce::String reverse = "Reverse";
-    static const juce::String size = "Size";
-    static const juce::String diffusion = "Diffusion";
-    static const juce::String modRate = "ModRate";
-    static const juce::String modDepth = "ModDepth";
+    static const juce::String size = "Size"; //y
+    static const juce::String earlyDiffusion = "EarlyDiffusion"; //y
+//    static const juce::String diffusion = "Diffusion"; //y
+    static const juce::String lateDiffusion = "LateDiffusion"; //y
+    static const juce::String modRate = "ModRate"; //y
+    static const juce::String modDepth = "ModDepth"; //y
     static const juce::String modType = "ModType";
-    static const juce::String decay = "Decay";
-    static const juce::String earlyHPFCutoff = "EarlyHPFCutoff";
-    static const juce::String earlyLPFCutoff = "EarlyLPFCutoff";
-    static const juce::String lateHPFCutoff = "LateHPFCutoff";
-    static const juce::String lateLPFCutoff = "LateLPFCutoff";
-    static const juce::String shimmerLevel = "ShimmerLevel";
-    static const juce::String shimmerTransposition = "ShimmerTransposition";
+    static const juce::String decay = "Decay"; //y
+    static const juce::String earlyHPFCutoff = "EarlyHPFCutoff"; //y
+    static const juce::String earlyLPFCutoff = "EarlyLPFCutoff"; //y
+    static const juce::String lateHPFCutoff = "LateHPFCutoff"; //y
+    static const juce::String lateLPFCutoff = "LateLPFCutoff"; //y
+    static const juce::String shimmerLevel = "ShimmerLevel"; //y
+    static const juce::String shimmerTransposition = "ShimmerTransposition"; //y
     static const juce::String interpolationType = "interpolationType";
     static const juce::String feedbackLimit = "FeedbackLimit";
     static const juce::String monoLow = "MonoLow";
@@ -46,14 +51,17 @@ namespace parameterIDs
     enum class idsenum
     {
         earlyReflectionType,
+        earlyReflectionLevel,
         lateReflectionType,
+        lateReflectionLevel,
         mix,
         inputHPFCutoff,
         inputLPFCutoff,
         preDelay,
         reverse,
         size,
-        diffusion,
+        earlyDiffusion,
+        lateDiffusion,
         modRate,
         modDepth,
         modType,
@@ -66,20 +74,25 @@ namespace parameterIDs
         shimmerTransposition,
         interpolationType,
         feedbackLimit,
-        monoLow
+        monoLow,
+        dry,
+        wet
     };
 
     static const std::unordered_map< juce::String, idsenum > id2enum
     {
         { earlyReflectionType, idsenum::earlyReflectionType },
+        { earlyReflectionLevel, idsenum::earlyReflectionLevel },
         { lateReflectionType, idsenum::lateReflectionType },
+        { lateReflectionLevel, idsenum::lateReflectionLevel },
         { mix, idsenum::mix },
         { inputHPFCutoff, idsenum::inputHPFCutoff },
         { inputLPFCutoff, idsenum::inputLPFCutoff },
         { preDelay, idsenum::preDelay },
         { reverse, idsenum::reverse },
         { size, idsenum::size },
-        { diffusion, idsenum::diffusion },
+        { earlyDiffusion, idsenum::earlyDiffusion },
+        { lateDiffusion, idsenum::lateDiffusion },
         { modRate, idsenum::modRate },
         { modDepth, idsenum::modDepth },
         { modType, idsenum::modType },
@@ -103,14 +116,17 @@ namespace parameterIDs
     static const std::unordered_map< juce::String, paramType > id2ParamTypeEnum
     {
         { earlyReflectionType, paramType::CHOICE },
+        { earlyReflectionLevel, paramType::FLOAT },
         { lateReflectionType, paramType::CHOICE },
+        { lateReflectionLevel, paramType::FLOAT },
         { mix, paramType::FLOAT },
         { inputHPFCutoff, paramType::FLOAT },
         { inputLPFCutoff, paramType::FLOAT },
         { preDelay, paramType::FLOAT },
         { reverse, paramType::BOOLEAN },
         { size, paramType::FLOAT },
-        { diffusion, paramType::FLOAT },
+        { earlyDiffusion, paramType::FLOAT },
+        { lateDiffusion, paramType::FLOAT },
         { modRate, paramType::FLOAT },
         { modDepth, paramType::FLOAT },
         { modType, paramType::CHOICE },
