@@ -6,6 +6,10 @@
               companyName="sjf" displaySplashScreen="1">
   <MAINGROUP id="eiPGLS" name="sjf_verb">
     <GROUP id="{BCFA9A7E-307F-AA40-0015-B88FA608841E}" name="Source">
+      <FILE id="jiKq1I" name="sjf_verb_outputProcessing.cpp" compile="1"
+            resource="0" file="Source/sjf_verb_outputProcessing.cpp"/>
+      <FILE id="kahKH5" name="sjf_verb_outputProcessing.h" compile="0" resource="0"
+            file="Source/sjf_verb_outputProcessing.h"/>
       <FILE id="WLYZzj" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="vTTsXZ" name="PluginProcessor.h" compile="0" resource="0"

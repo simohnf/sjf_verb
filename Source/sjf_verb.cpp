@@ -30,11 +30,13 @@ void sjf_verb< Sample >::initialise( Sample sampleRate, int numberOfChannels )
     }
     
     m_inputProcessor.initialise( m_SR, numberOfChannels );
-    
+    m_outputProcessor.initialise( m_SR, numberOfChannels );
     auto nChans = m_dspWrap.initialise( m_SR, numberOfChannels );
     m_samples.resize( nChans, 0 );
     m_inSamps.resize( numberOfChannels, 0 );
     m_outSamps.resize( numberOfChannels, 0 );
+    
+    
 }
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
@@ -52,19 +54,24 @@ inline void sjf_verb< Sample >::process( juce::AudioBuffer< Sample >& buffer )
     
     for ( auto s = 0; s < blockSize; s++ )
     {
+        
+        m_inputProcessor.m_preDelayTime = getSmoothedVal( parameterIDs::idsenum::preDelay );
+        m_inputProcessor.m_inputLPFCutoff = getSmoothedVal( parameterIDs::idsenum::inputLPFCutoff );
+        m_inputProcessor.m_inputHPFCutoff = getSmoothedVal( parameterIDs::idsenum::inputHPFCutoff );
+        
         m_erLevel = getSmoothedVal( parameterIDs::idsenum::earlyReflectionLevel );
         m_dspWrap.m_earlyDiff = getSmoothedVal( parameterIDs::idsenum::earlyDiffusion );
         m_dspWrap.m_erDamp = getSmoothedVal( parameterIDs::idsenum::earlyLPFCutoff );
+        m_dspWrap.m_erDampLow = getSmoothedVal( parameterIDs::idsenum::earlyHPFCutoff );
         
         m_lrLevel = getSmoothedVal( parameterIDs::idsenum::lateReflectionLevel );
         m_dspWrap.m_lrDamp = getSmoothedVal( parameterIDs::idsenum::lateLPFCutoff );
+        m_dspWrap.m_lrDampLow = getSmoothedVal( parameterIDs::idsenum::lateHPFCutoff );
         m_dspWrap.m_lateDiff = getSmoothedVal( parameterIDs::idsenum::lateDiffusion );
         
         m_dspWrap.m_decay = getSmoothedVal( parameterIDs::idsenum::decay );
         m_dspWrap.m_size = getSmoothedVal( parameterIDs::idsenum::size );
         
-        m_dry = getSmoothedVal( parameterIDs::idsenum::dry );
-        m_wet = getSmoothedVal( parameterIDs::idsenum::wet );
 
         temp = m_dspWrap.m_modRate;
         m_dspWrap.m_modRate = getSmoothedVal(parameterIDs::idsenum::modRate );
@@ -73,9 +80,10 @@ inline void sjf_verb< Sample >::process( juce::AudioBuffer< Sample >& buffer )
         m_dspWrap.m_modPhase = m_dspWrap.m_modPhasor.process();
         m_dspWrap.m_modDepth = getSmoothedVal(parameterIDs::idsenum::modDepth );
         
-        m_inputProcessor.m_preDelayTime = getSmoothedVal( parameterIDs::idsenum::preDelay );
-        m_inputProcessor.m_inputLPFCutoff = getSmoothedVal( parameterIDs::idsenum::inputLPFCutoff );
-        m_inputProcessor.m_inputHPFCutoff = getSmoothedVal( parameterIDs::idsenum::inputHPFCutoff );
+
+        
+        m_dry = getSmoothedVal( parameterIDs::idsenum::dry );
+        m_wet = getSmoothedVal( parameterIDs::idsenum::wet );
         
         for ( auto i = 0; i < channels; i++ )
             m_inSamps[ i ] = m_samples[ i ] = buffer.getSample( i, s );
@@ -83,11 +91,13 @@ inline void sjf_verb< Sample >::process( juce::AudioBuffer< Sample >& buffer )
             m_samples[ i ] = 0;
         m_inputProcessor.process( m_samples );
         m_dspWrap.processEarly( m_samples );
+        m_dspWrap.filterEarly( m_samples );
         for ( auto i = 0; i < channels; i++ )
             m_outSamps[ i ] = m_samples[ i ] * m_erLevel;
         m_dspWrap.processLate( m_samples );
         for ( auto i = 0; i < channels; i++ )
             m_outSamps[ i ] += m_samples[ i ] * m_lrLevel;
+        m_outputProcessor.process( m_outSamps );
         for ( auto i = 0; i < channels; i++ )
             buffer.setSample( i, s, m_outSamps[ i ]*m_wet + m_inSamps[ i ]*m_dry );
     }
@@ -163,8 +173,8 @@ void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeSt
                 m_paramHandler.addParameter(vts,
                                             p,
                                             [ this, smootherPtr ]( Sample v )
-                                            { smootherPtr->setTargetValue( ( v * 0.007 ) + 0.2 ); });
-                smootherPtr->setCurrentAndTargetValue( ( val * 0.007 ) + 0.2 );
+                                            { smootherPtr->setTargetValue( ( v * 0.006 ) + 0.2 ); });
+                smootherPtr->setCurrentAndTargetValue( ( val * 0.006 ) + 0.2 );
             }
             else if ( id == parameterIDs::modDepth )
             {
@@ -263,6 +273,14 @@ void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeSt
                 m_inputProcessor.reverse( static_cast< bool >( v ) );
             } );
             m_inputProcessor.reverse( static_cast< bool >( val ) );
+        }
+        else if ( id == parameterIDs::monoLow )
+        {
+            m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
+                                        {
+                m_outputProcessor.setMonoLow( static_cast< bool >( v ) );
+            } );
+            m_outputProcessor.setMonoLow( static_cast< bool >( val ) );
         }
     }
 }

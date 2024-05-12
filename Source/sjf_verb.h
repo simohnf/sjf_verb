@@ -17,6 +17,7 @@
 #include "parameterIDs.h"
 #include "sjf_verb_dspWrapper.h"
 #include "sjf_verb_inputProcessing.h"
+#include "sjf_verb_outputProcessing.h"
 
 
 
@@ -50,13 +51,14 @@ private:
     std::unordered_map<  parameterIDs::idsenum, juce::LinearSmoothedValue< Sample >* > m_smootherMap;
     
     
-    Sample m_SR{44100.0}, m_erLevel{1.0}, m_lrLevel{1.0}, m_dry{0.0}, m_wet{1.0};
+    Sample m_SR{44100.0}, m_erLevel{1.0}, m_lrLevel{1.0}, m_dry{0.0}, m_wet{1.0};;
     
     sjf_verb_DSP_wrapper< Sample > m_dspWrap;
     
     std::vector< Sample > m_samples, m_outSamps, m_inSamps;
     
     sjf_verb_inputProcessor< Sample > m_inputProcessor;
-    
+    sjf_verb_outputProcessor< Sample > m_outputProcessor;
+  
 };
 

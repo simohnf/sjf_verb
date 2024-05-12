@@ -17,6 +17,8 @@
 template< typename Sample >
 class sjf_verb_DSP_wrapper
 {
+    typedef sjf::utilities::classMemberFunctionPointer< sjf_verb_DSP_wrapper, void, std::vector< Sample >& > funcPtr;
+    
 public:
     sjf_verb_DSP_wrapper(){}
     ~sjf_verb_DSP_wrapper()
@@ -40,8 +42,13 @@ public:
     
     void setFdnMixType( sjf::rev::mixers type );
     
-    sjf::utilities::classMemberFunctionPointer< sjf_verb_DSP_wrapper, void, std::vector< Sample >& >     processEarly{this,&sjf_verb_DSP_wrapper::er_default};
-    sjf::utilities::classMemberFunctionPointer< sjf_verb_DSP_wrapper, void, std::vector< Sample >& >     processLate{this,&sjf_verb_DSP_wrapper::lr_default};
+    
+    
+    funcPtr processEarly{this,&sjf_verb_DSP_wrapper::er_default};
+    
+    void filterEarly( std::vector< Sample >& );
+    
+    funcPtr processLate{this,&sjf_verb_DSP_wrapper::lr_default};
     
     
 private:
@@ -57,14 +64,13 @@ private:
     inline void lr_default( std::vector< Sample >& ){ return; };
     
     void setDSPFunctions( );
-    void initialiseDelayTimes( Sample sampleRate );
+    void initialiseDelayTimes( Sample );
     
     
     
 private:
     std::unique_ptr< sjf::rev::rotDelDif< Sample > >                                            m_rotDelDif;
     std::vector< std::unique_ptr< sjf::rev::multiTap< Sample > > >                              m_multiTap;
-    std::vector< sjf::filters::damper< Sample > >                                               m_multiTapDamp;
     std::vector< std::unique_ptr< sjf::rev::seriesAllpass< Sample > > >                         m_seriesAP;
     std::unique_ptr< sjf::rev::allpassLoop< Sample > >                                          m_apLoop;
     std::unique_ptr< sjf::rev::fdn< Sample > >                                                  m_fdn;
@@ -94,11 +100,13 @@ private:
     std::vector< sjf::rev::dtModulatorVoice< Sample > >                                         m_fdn_modulators;
     std::vector< std::vector< sjf::rev::dtModulatorVoice< Sample > > >                          m_apLoop_modulators;
     
+    std::vector< sjf::filters::damper< Sample > >                                               m_earlyLPF, m_earlyHPF;
     
-
+    sjf::rev::mixers m_mixType{sjf::rev::mixers::householder};
+    sjf_interpolators::interpolatorTypes m_interp{sjf_interpolators::interpolatorTypes::linear};
 public:
     // FOR EASY ACCESS BY PARENT CLASS
-    Sample m_earlyDiff{0.7}, m_lateDiff{0.5}, m_erDamp{0.2}, m_lrDamp{0.2}, m_decay{1.0}, m_size{1.0}, m_modDepth{0.5}, m_modRate{1.0},
+    Sample m_earlyDiff{0.7}, m_lateDiff{0.5}, m_erDamp{0.1}, m_erDampLow{0.95}, m_lrDamp{0.2}, m_lrDampLow{0.95}, m_decay{1.0}, m_size{1.0}, m_modDepth{0.5}, m_modRate{1.0},
     m_modDamp{ static_cast<Sample>(1.0 - calculateLPFCoefficient(m_modRate, m_SR))}, m_modPhase{0};
     
     

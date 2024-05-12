@@ -28,6 +28,8 @@ public:
     void setInterpolationType( sjf_interpolators::interpolatorTypes interpType );
     
     void reverse( bool shouldReverse);
+    
+    void setPredelayTime( Sample preDelaySamps );
 public:
     Sample m_preDelayTime{0.0}, m_inputLPFCutoff{0.0}, m_inputHPFCutoff{1.0};
     
@@ -39,6 +41,7 @@ private:
     std::vector< sjf::filters::damper< Sample > > m_inputLPF, m_inputHPF;
     
     unsigned NCHANNELS{2};
+    bool m_reversed{false};
 };
 
 #endif /* sjf_verb_inputProcessing_h */

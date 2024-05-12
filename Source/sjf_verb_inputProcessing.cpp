@@ -20,13 +20,16 @@ void sjf_verb_inputProcessor< Sample >::initialise( Sample sampleRate, int numbe
     
     m_preDelays.resize( NCHANNELS );
     for ( auto & pd : m_preDelays )
+    {
         pd.initialise( m_SR * 0.5, m_SR*0.001 );
+        pd.reverse( m_reversed );
+    }
+    
     
     m_inputLPF.resize( numberOfChannels );
     m_inputHPF.resize( numberOfChannels );
     
 }
-
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
@@ -50,9 +53,8 @@ void sjf_verb_inputProcessor< Sample >::process( std::vector< Sample >& samples 
         m_preDelays[ i ].setDelayTime( m_preDelayTime );
         m_preDelays[ i ].setSample( samples[ i ] );
         samples[ i ] = m_preDelayTime <= 1.0 ? samples[ i ] : m_preDelays[ i ].getSample();
-        
         samples[ i ] = m_inputLPF[ i ].process( samples[ i ], m_inputLPFCutoff );
-        samples[ i ] -= m_inputHPF[ i ].process( samples[ i ], m_inputHPFCutoff );
+        samples[ i ] = m_inputHPF[ i ].processHP( samples[ i ], m_inputHPFCutoff );
     }
 }
 
@@ -64,6 +66,7 @@ void sjf_verb_inputProcessor< Sample >::process( std::vector< Sample >& samples 
 template < typename Sample >
 void sjf_verb_inputProcessor< Sample >::reverse( bool shouldReverse)
 {
+    m_reversed = shouldReverse;
     for ( auto & pd : m_preDelays )
         pd.reverse( shouldReverse );
 }
