@@ -13,12 +13,18 @@
       <FILE id="Z4I7Yc" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="cJwnzx" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="MJGHdC" name="parameterIDs.h" compile="0" resource="0" file="Source/parameterIDs.h"/>
+      <FILE id="LxDhmL" name="sjf_verb.cpp" compile="1" resource="0" file="Source/sjf_verb.cpp"/>
+      <FILE id="c2mBQl" name="sjf_verb.h" compile="0" resource="0" file="Source/sjf_verb.h"/>
+      <FILE id="JIuaKt" name="sjf_verb_inputProcessing.cpp" compile="1" resource="0"
+            file="Source/sjf_verb_inputProcessing.cpp"/>
+      <FILE id="n9uba8" name="sjf_verb_inputProcessing.h" compile="0" resource="0"
+            file="Source/sjf_verb_inputProcessing.h"/>
+      <FILE id="vO7veF" name="sjf_verb_dspWrapper.cpp" compile="1" resource="0"
+            file="Source/sjf_verb_dspWrapper.cpp"/>
+      <FILE id="TfZfqy" name="sjf_verb_dspWrapper.h" compile="0" resource="0"
+            file="Source/sjf_verb_dspWrapper.h"/>
     </GROUP>
-    <FILE id="SF2G3x" name="dspWrapper.cpp" compile="1" resource="0" file="Source/dspWrapper.cpp"/>
-    <FILE id="hcJEQf" name="dspWrapper.h" compile="0" resource="0" file="Source/dspWrapper.h"/>
-    <FILE id="MJGHdC" name="parameterIDs.h" compile="0" resource="0" file="Source/parameterIDs.h"/>
-    <FILE id="LxDhmL" name="sjf_verb.cpp" compile="1" resource="0" file="Source/sjf_verb.cpp"/>
-    <FILE id="c2mBQl" name="sjf_verb.h" compile="0" resource="0" file="Source/sjf_verb.h"/>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
   <EXPORTFORMATS>
