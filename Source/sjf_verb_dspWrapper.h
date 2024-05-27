@@ -9,15 +9,16 @@
 #ifndef sjf_verb_dspWrapper_h
 #define sjf_verb_dspWrapper_h
 
-#include "../sjf_audio/sjf_audioUtilities.h"
+#include "../sjf_audio/sjf_audioUtilitiesC++.h"
 #include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_rev.h"
+#include "../sjf_audio/sjf_oscillators.h"
 #include "parameterIDs.h"
 
 template< typename Sample >
 class sjf_verb_DSP_wrapper
 {
-    typedef sjf::utilities::classMemberFunctionPointer< sjf_verb_DSP_wrapper, void, std::vector< Sample >& > funcPtr;
+//    typedef sjf::utilities::classMemberFunctionPointer< sjf_verb_DSP_wrapper, void, std::vector< Sample >& > funcPtr;
     
 public:
     sjf_verb_DSP_wrapper(){}
@@ -35,7 +36,7 @@ public:
     void setEarlyType( parameterIDs::earlyTypesEnum type, Sample sampleRate );
     void setLateType( parameterIDs::lateTypesEnum type, Sample sampleRate );
     
-    void setInterpolationType( sjf_interpolators::interpolatorTypes interpType );
+    void setInterpolationType( sjf::interpolation::interpolatorTypes interpType );
     
     void initialiseEarlyDSP( Sample sampleRate );
     void initialiseLateDSP( Sample sampleRate );
@@ -44,12 +45,17 @@ public:
     
     
     
-    funcPtr processEarly{this,&sjf_verb_DSP_wrapper::er_default};
+//    funcPtr processEarly{this,&sjf_verb_DSP_wrapper::er_default};
+    void processEarly( std::vector< Sample >& samples );
     
-    void filterEarly( std::vector< Sample >& );
+    void filterEarly( std::vector< Sample >& samples );
     
-    funcPtr processLate{this,&sjf_verb_DSP_wrapper::lr_default};
+//    funcPtr processLate{this,&sjf_verb_DSP_wrapper::lr_default};
+    void processLate( std::vector< Sample >& samples );
     
+    void processShimmer( std::vector< Sample >& samples );
+    
+    void setControlFB( bool shouldControlFeedback );
     
 private:
     
@@ -103,14 +109,17 @@ private:
     std::vector< sjf::filters::damper< Sample > >                                               m_earlyLPF, m_earlyHPF;
     
     sjf::rev::mixers m_mixType{sjf::rev::mixers::householder};
-    sjf_interpolators::interpolatorTypes m_interp{sjf_interpolators::interpolatorTypes::linear};
+    sjf::interpolation::interpolatorTypes m_interp{sjf::interpolation::interpolatorTypes::linear};
 public:
     // FOR EASY ACCESS BY PARENT CLASS
-    Sample m_earlyDiff{0.7}, m_lateDiff{0.5}, m_erDamp{0.1}, m_erDampLow{0.95}, m_lrDamp{0.2}, m_lrDampLow{0.95}, m_decay{1.0}, m_size{1.0}, m_modDepth{0.5}, m_modRate{1.0},
-    m_modDamp{ static_cast<Sample>(1.0 - calculateLPFCoefficient(m_modRate, m_SR))}, m_modPhase{0};
+    Sample m_earlyDiff{0.7}, m_erDamp{0.1}, m_erDampLow{0.95}, m_lateDiff{0.5}, m_lrDamp{0.2}, m_lrDampLow{0.95}, m_decay{1.0}, m_size{1.0};
+    Sample m_modDepth{0.5}, m_modRate{1.0}, m_modDamp{ static_cast<Sample>(1.0 - calculateLPFCoefficient(m_modRate, m_SR))}, m_modPhase{0};
+    Sample m_shimmerScale{1.0}, m_shimmerLevel{1.0}, m_shimSamp{0};
+    bool m_fbControl{false};
+    sjf::oscillators::phasor< Sample > m_modPhasor{ 1, m_SR };
     
+    sjf::delayLine::pitchShift< Sample > m_pitchShifter;
     
-    sjf::rev::phasor< Sample > m_modPhasor{ 1, m_SR };
 };
 
 

@@ -20,11 +20,11 @@ void sjf_verb_inputProcessor< Sample >::initialise( Sample sampleRate, int numbe
     
     m_preDelays.resize( NCHANNELS );
     for ( auto & pd : m_preDelays )
-    {
         pd.initialise( m_SR * 0.5, m_SR*0.001 );
-        pd.reverse( m_reversed );
-    }
     
+    m_preDelaySmoother.reset( m_SR, 0.05 );
+    m_LPFSmoother.reset( m_SR, 0.05 );
+    m_HPFSmoother.reset( m_SR, 0.05 );
     
     m_inputLPF.resize( numberOfChannels );
     m_inputHPF.resize( numberOfChannels );
@@ -35,27 +35,57 @@ void sjf_verb_inputProcessor< Sample >::initialise( Sample sampleRate, int numbe
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 template< typename Sample >
-void sjf_verb_inputProcessor< Sample >::setInterpolationType( sjf_interpolators::interpolatorTypes interpType )
+void sjf_verb_inputProcessor< Sample >::setInterpolationType( sjf::interpolation::interpolatorTypes interpType )
 {
-    for ( auto & i : m_preDelays ){ i.setInterpolationType( sjf_interpolators::interpolatorTypes::none ); }
+    for ( auto & i : m_preDelays ){ i.setInterpolationType( sjf::interpolation::interpolatorTypes::none ); }
 }
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-
 template < typename Sample >
-void sjf_verb_inputProcessor< Sample >::process( std::vector< Sample >& samples )
+void sjf_verb_inputProcessor< Sample >::processBlock(const juce::AudioBuffer<Sample> &inputBuffer, juce::AudioBuffer<Sample> &revBuffer, size_t blockSize )
 {
-    
-    for ( auto i = 0; i < NCHANNELS; i++ )
+    Sample samp = 0.0, pdDT = 0, lpfCO = 0, hpfCO= 0;
+    if ( m_reversed )
     {
-        m_preDelays[ i ].setDelayTime( m_preDelayTime );
-        m_preDelays[ i ].setSample( samples[ i ] );
-        samples[ i ] = m_preDelayTime <= 1.0 ? samples[ i ] : m_preDelays[ i ].getSample();
-        samples[ i ] = m_inputLPF[ i ].process( samples[ i ], m_inputLPFCutoff );
-        samples[ i ] = m_inputHPF[ i ].processHP( samples[ i ], m_inputHPFCutoff );
+        for ( auto i = 0; i < blockSize; i++ )
+        {
+            pdDT = m_preDelaySmoother.getNextValue();
+            for ( auto c = 0; c < NCHANNELS; c++ )
+            {
+                m_preDelays[ c ].setDelayTime( pdDT );
+                m_preDelays[ c ].setSample( inputBuffer.getSample( c, i ) );
+                revBuffer.setSample( c, i, m_preDelays[ c ].getSampleReversed() );
+            }
+        }
     }
+    else
+    {
+        for ( auto i = 0; i < blockSize; i++ )
+        {
+            pdDT = m_preDelaySmoother.getNextValue();
+            for ( auto c = 0; c < NCHANNELS; c++ )
+            {
+                m_preDelays[ c ].setDelayTime( pdDT );
+                m_preDelays[ c ].setSample( inputBuffer.getSample( c, i ) );
+                revBuffer.setSample( c, i, m_preDelays[ c ].getSample() );
+            }
+        }
+    }
+    
+    for ( auto i = 0; i < blockSize; i++ )
+    {
+        lpfCO = m_LPFSmoother.getNextValue();
+        hpfCO = m_HPFSmoother.getNextValue();
+        for ( auto c = 0; c < NCHANNELS; c++ )
+        {
+            samp = m_inputLPF[ c ].process( revBuffer.getSample( c, i ), lpfCO );
+            samp = m_inputHPF[ c ].processHP( samp, hpfCO );
+            revBuffer.setSample( c, i, samp );
+        }
+    }
+    
 }
 
 //=======================================//=======================================//=======================================
@@ -64,12 +94,15 @@ void sjf_verb_inputProcessor< Sample >::process( std::vector< Sample >& samples 
 //=======================================//=======================================//=======================================
 
 template < typename Sample >
-void sjf_verb_inputProcessor< Sample >::reverse( bool shouldReverse)
+void sjf_verb_inputProcessor< Sample >::setReversed( bool shouldReverse)
 {
     m_reversed = shouldReverse;
-    for ( auto & pd : m_preDelays )
-        pd.reverse( shouldReverse );
 }
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+
 
 
 

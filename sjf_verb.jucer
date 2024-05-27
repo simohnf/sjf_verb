@@ -28,6 +28,18 @@
             file="Source/sjf_verb_dspWrapper.cpp"/>
       <FILE id="TfZfqy" name="sjf_verb_dspWrapper.h" compile="0" resource="0"
             file="Source/sjf_verb_dspWrapper.h"/>
+      <FILE id="KtPK18" name="sjf_verb_earlyProcessing.cpp" compile="1" resource="0"
+            file="Source/sjf_verb_earlyProcessing.cpp"/>
+      <FILE id="dXgVka" name="sjf_verb_earlyProcessing.h" compile="0" resource="0"
+            file="Source/sjf_verb_earlyProcessing.h"/>
+      <FILE id="sSnNMk" name="sjf_verb_earlyProcessor_DSP_Wrappers.h" compile="0"
+            resource="0" file="Source/sjf_verb_earlyProcessor_DSP_Wrappers.h"/>
+      <FILE id="FXSNp4" name="sjf_verb_lateProcessing.cpp" compile="1" resource="0"
+            file="Source/sjf_verb_lateProcessing.cpp"/>
+      <FILE id="hJvLNI" name="sjf_verb_lateProcessing.h" compile="0" resource="0"
+            file="Source/sjf_verb_lateProcessing.h"/>
+      <FILE id="SidItn" name="sjf_verb_lateProcessor_DSP_Wrappers.h" compile="0"
+            resource="0" file="Source/sjf_verb_lateProcessor_DSP_Wrappers.h"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>
@@ -35,8 +47,8 @@
     <XCODE_MAC targetFolder="Builds/MacOSX">
       <CONFIGURATIONS>
         <CONFIGURATION isDebug="1" name="Debug" targetName="sjf_verb"/>
-        <CONFIGURATION isDebug="0" name="Release" targetName="sjf_verb" optimisation="6"
-                       linkTimeOptimisation="1" fastMath="1"/>
+        <CONFIGURATION isDebug="0" name="Release" targetName="sjf_verb" linkTimeOptimisation="1"
+                       fastMath="1"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../JUCE/modules"/>

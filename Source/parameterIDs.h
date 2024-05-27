@@ -202,15 +202,15 @@ namespace parameterIDs
     static const juce::String interp_her{ "hermite" };
     static const juce::StringArray interpTypes = { interp_none, interp_lin, interp_cub, interp_pd, interp_4th, interp_god, interp_her };
 
-    static const std::unordered_map< int, sjf_interpolators::interpolatorTypes > interpMap
+    static const std::unordered_map< int, sjf::interpolation::interpolatorTypes > interpMap
     {
-        { interpTypes.indexOf(interp_none), sjf_interpolators::interpolatorTypes::none },
-        { interpTypes.indexOf(interp_lin), sjf_interpolators::interpolatorTypes::linear },
-        { interpTypes.indexOf(interp_cub), sjf_interpolators::interpolatorTypes::cubic },
-        { interpTypes.indexOf(interp_pd), sjf_interpolators::interpolatorTypes::pureData },
-        { interpTypes.indexOf(interp_4th), sjf_interpolators::interpolatorTypes::fourthOrder },
-        { interpTypes.indexOf(interp_god), sjf_interpolators::interpolatorTypes::godot },
-        { interpTypes.indexOf(interp_her), sjf_interpolators::interpolatorTypes::hermite }
+        { interpTypes.indexOf(interp_none), sjf::interpolation::interpolatorTypes::none },
+        { interpTypes.indexOf(interp_lin), sjf::interpolation::interpolatorTypes::linear },
+        { interpTypes.indexOf(interp_cub), sjf::interpolation::interpolatorTypes::cubic },
+        { interpTypes.indexOf(interp_pd), sjf::interpolation::interpolatorTypes::pureData },
+        { interpTypes.indexOf(interp_4th), sjf::interpolation::interpolatorTypes::fourthOrder },
+        { interpTypes.indexOf(interp_god), sjf::interpolation::interpolatorTypes::godot },
+        { interpTypes.indexOf(interp_her), sjf::interpolation::interpolatorTypes::hermite }
     };
 
     static const juce::StringArray modTypes = { "random", "sin" };

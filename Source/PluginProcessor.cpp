@@ -97,7 +97,7 @@ void Sjf_verbAudioProcessor::changeProgramName (int index, const juce::String& n
 //==============================================================================
 void Sjf_verbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    m_rev.initialise( sampleRate, std::max( getTotalNumInputChannels(), getTotalNumOutputChannels() ) );
+    m_rev.initialise( sampleRate, samplesPerBlock, std::max( getTotalNumInputChannels(), getTotalNumOutputChannels() ) );
 }
 
 void Sjf_verbAudioProcessor::releaseResources()
@@ -145,7 +145,7 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     
 //    setReverbParameters();
 //
-    m_rev.process( buffer );
+    m_rev.processBlock( buffer );
 }
 
 //==============================================================================

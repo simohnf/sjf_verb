@@ -8,10 +8,10 @@
 
 
 #include "sjf_verb.h"
-#include "../sjf_audio/sjf_audioUtilities.h"
+#include "../sjf_audio/sjf_audioUtilitiesC++.h"
 #include "../sjf_audio/sjf_parameterHandler.h"
 #include "../sjf_audio/sjf_rev.h"
-#include "../sjf_audio/sjf_lpf.h"
+//#include "../sjf_audio/sjf_lpf.h"
 
 
 //=============================//=============================//=============================//=============================
@@ -20,23 +20,31 @@
 //=============================//=============================//=============================//=============================
 
 template< typename Sample >
-void sjf_verb< Sample >::initialise( Sample sampleRate, int numberOfChannels )
+void sjf_verb< Sample >::initialise( Sample sampleRate, int samplesPerBlock, int numberOfChannels )
 {
     m_SR = sampleRate > 0 ? sampleRate : m_SR;
-    for ( auto& s : m_smoothers )
-    {
-        s.reset( m_SR, 0.05 );
-        s.setCurrentAndTargetValue( s.getTargetValue() );
-    }
+//    for ( auto& s : m_smoothers )
+//    {
+//        s.reset( m_SR, 0.05 );
+//        s.setCurrentAndTargetValue( s.getTargetValue() );
+//    }
+//
+    m_erLevelSmoother.reset( m_SR, 0.05 );
+    m_lrLevelSmoother.reset( m_SR, 0.05 );
+    m_drySmoother.reset( m_SR, 0.05 );
+    m_wetSmoother.reset( m_SR, 0.05 );
     
     m_inputProcessor.initialise( m_SR, numberOfChannels );
+    auto nInternalChannels = m_earlyReflections.initialise( m_SR, numberOfChannels);
+    nInternalChannels = std::max( nInternalChannels, m_lateReflections.initialise( m_SR, numberOfChannels ) );
     m_outputProcessor.initialise( m_SR, numberOfChannels );
-    auto nChans = m_dspWrap.initialise( m_SR, numberOfChannels );
-    m_samples.resize( nChans, 0 );
-    m_inSamps.resize( numberOfChannels, 0 );
-    m_outSamps.resize( numberOfChannels, 0 );
+//    auto nChans = m_dspWrap.initialise( m_SR, numberOfChannels );
+//    m_samples.resize( nChans, 0 );
+//    m_inSamps.resize( numberOfChannels, 0 );
+//    m_outSamps.resize( numberOfChannels, 0 );
     
-    
+    m_revBuffer.setSize( nInternalChannels, samplesPerBlock );
+    m_outputBuffer.setSize( nInternalChannels, samplesPerBlock );
 }
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
@@ -44,62 +52,38 @@ void sjf_verb< Sample >::initialise( Sample sampleRate, int numberOfChannels )
 //=============================//=============================//=============================//=============================
 
 template < typename Sample >
-inline void sjf_verb< Sample >::process( juce::AudioBuffer< Sample >& buffer )
+inline void sjf_verb< Sample >::processBlock( juce::AudioBuffer< Sample >& buffer )
 {
     m_paramHandler.triggerCallbacks();
     
     auto blockSize = buffer.getNumSamples();
     auto channels = buffer.getNumChannels();
-    Sample temp = 0.0;
+    Sample mR{0.0}, erLev = 0, lrLev = 0, dryLev = 0, wetLev = 0;
     
-    for ( auto s = 0; s < blockSize; s++ )
+    m_revBuffer.clear();
+//    m_outputBuffer.clear();
+    m_inputProcessor.processBlock( buffer, m_revBuffer, blockSize );
+    m_earlyReflections.processBlock( m_revBuffer, blockSize );
+    m_outputBuffer.makeCopyOf( m_revBuffer );
+        
+    m_lateReflections.processBlock( m_revBuffer, blockSize );
+    
+    for ( auto i = 0; i < blockSize; i++ )
     {
-        
-        m_inputProcessor.m_preDelayTime = getSmoothedVal( parameterIDs::idsenum::preDelay );
-        m_inputProcessor.m_inputLPFCutoff = getSmoothedVal( parameterIDs::idsenum::inputLPFCutoff );
-        m_inputProcessor.m_inputHPFCutoff = getSmoothedVal( parameterIDs::idsenum::inputHPFCutoff );
-        
-        m_erLevel = getSmoothedVal( parameterIDs::idsenum::earlyReflectionLevel );
-        m_dspWrap.m_earlyDiff = getSmoothedVal( parameterIDs::idsenum::earlyDiffusion );
-        m_dspWrap.m_erDamp = getSmoothedVal( parameterIDs::idsenum::earlyLPFCutoff );
-        m_dspWrap.m_erDampLow = getSmoothedVal( parameterIDs::idsenum::earlyHPFCutoff );
-        
-        m_lrLevel = getSmoothedVal( parameterIDs::idsenum::lateReflectionLevel );
-        m_dspWrap.m_lrDamp = getSmoothedVal( parameterIDs::idsenum::lateLPFCutoff );
-        m_dspWrap.m_lrDampLow = getSmoothedVal( parameterIDs::idsenum::lateHPFCutoff );
-        m_dspWrap.m_lateDiff = getSmoothedVal( parameterIDs::idsenum::lateDiffusion );
-        
-        m_dspWrap.m_decay = getSmoothedVal( parameterIDs::idsenum::decay );
-        m_dspWrap.m_size = getSmoothedVal( parameterIDs::idsenum::size );
-        
+        erLev = m_erLevelSmoother.getNextValue();
+        lrLev = m_lrLevelSmoother.getNextValue();
+        for ( auto c = 0; c < channels; c++ )
+            m_outputBuffer.setSample( c, i, m_outputBuffer.getSample( c, i )*erLev + m_revBuffer.getSample( c, i )*lrLev );
+    }
 
-        temp = m_dspWrap.m_modRate;
-        m_dspWrap.m_modRate = getSmoothedVal(parameterIDs::idsenum::modRate );
-        m_dspWrap.m_modDamp = temp != m_dspWrap.m_modRate ? ( 1.0 - calculateLPFCoefficient( m_dspWrap.m_modRate, m_SR ) ) : m_dspWrap.m_modDamp;
-        m_dspWrap.m_modPhasor.setFrequency( m_dspWrap.m_modRate, m_SR );
-        m_dspWrap.m_modPhase = m_dspWrap.m_modPhasor.process();
-        m_dspWrap.m_modDepth = getSmoothedVal(parameterIDs::idsenum::modDepth );
-        
-
-        
-        m_dry = getSmoothedVal( parameterIDs::idsenum::dry );
-        m_wet = getSmoothedVal( parameterIDs::idsenum::wet );
-        
-        for ( auto i = 0; i < channels; i++ )
-            m_inSamps[ i ] = m_samples[ i ] = buffer.getSample( i, s );
-        for ( auto i = channels; i < m_samples.size(); i++ )
-            m_samples[ i ] = 0;
-        m_inputProcessor.process( m_samples );
-        m_dspWrap.processEarly( m_samples );
-        m_dspWrap.filterEarly( m_samples );
-        for ( auto i = 0; i < channels; i++ )
-            m_outSamps[ i ] = m_samples[ i ] * m_erLevel;
-        m_dspWrap.processLate( m_samples );
-        for ( auto i = 0; i < channels; i++ )
-            m_outSamps[ i ] += m_samples[ i ] * m_lrLevel;
-        m_outputProcessor.process( m_outSamps );
-        for ( auto i = 0; i < channels; i++ )
-            buffer.setSample( i, s, m_outSamps[ i ]*m_wet + m_inSamps[ i ]*m_dry );
+    m_outputProcessor.processBlock( m_outputBuffer, blockSize );
+    
+    for ( auto i = 0; i < blockSize; i++ )
+    {
+        dryLev = m_drySmoother.getNextValue();
+        wetLev = m_wetSmoother.getNextValue();
+        for ( auto c = 0; c < channels; c++ )
+            buffer.setSample( c, i, m_outputBuffer.getSample( c, i )*wetLev + buffer.getSample( c, i )*dryLev );
     }
 }
 //=============================//=============================//=============================//=============================
@@ -110,7 +94,9 @@ inline void sjf_verb< Sample >::process( juce::AudioBuffer< Sample >& buffer )
 template < typename Sample >
 void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeState &vts,  juce::Array<juce::AudioProcessorParameter*>& params )
 {
-    m_smoothers.reserve( params.size() ); // ensure vectore doesn't get moved... because then weird things happen!!!
+//    m_smoothers.reserve( params.size() ); // ensure vectore doesn't get moved... because then weird things happen!!!
+    // first ensure correct early and late algorithms are loaded
+    
     for ( auto& p : params )
     {
         // VAL CALCULATION NOW CORRECT BUT NEED TO MAKE SURE INITIAL VALUES ARE SCALES APPROPRIATELY!!!!
@@ -118,162 +104,246 @@ void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeSt
         auto id = static_cast< juce::AudioProcessorParameterWithID* >( p )->getParameterID();
         id = id.substring( parameterIDs::mainName.length() );
         jassert( parameterIDs::id2ParamTypeEnum.find( id ) != parameterIDs::id2ParamTypeEnum.end() );
-        if ( parameterIDs::id2ParamTypeEnum.find( id )->second == parameterIDs::paramType::FLOAT && id == parameterIDs::mix )
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//=======      GENERAL PARAMETERS      =========//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        if ( id == parameterIDs::mix )
         {
-            m_smoothers.emplace_back( juce::LinearSmoothedValue< Sample >() );
-            auto* smootherPtr = &m_smoothers[ m_smoothers.size() - 1 ];
-            smootherPtr->setCurrentAndTargetValue( val > 0.0 ? std::sqrt( val*0.01 ) : 0 );
-            jassert( parameterIDs::id2enum.find( id ) != parameterIDs::id2enum.end() );
-            m_smootherMap[ parameterIDs::idsenum::wet ] = smootherPtr;
             m_paramHandler.addParameter(vts,
                                         p,
-                                        [ this, smootherPtr ]( Sample v )
+                                        [this](Sample v)
                                         {
-                                            v = v > 0 ? std::sqrt( v*0.01 ) : 0;
-                                            smootherPtr->setTargetValue( v );
+                                            v *= 0.01;
+                                            auto wet = v > 0 ? std::sqrt( v ) : 0;
+                                            m_wetSmoother.setTargetValue( wet );
+                                            auto dry = 1.0 - v;
+                                            dry = dry > 0 ? std::sqrt( dry ) : 0;
+                                            m_drySmoother.setTargetValue( dry );
                                         });
-            
-            m_smoothers.emplace_back( juce::LinearSmoothedValue< Sample >() );
-            auto* smootherPtr2 = &m_smoothers[ m_smoothers.size() - 1 ];
-            smootherPtr2->setCurrentAndTargetValue( val < 100.0 ? std::sqrt( 1.0 - (val*0.01) ) : 0 );
-            jassert( parameterIDs::id2enum.find( id ) != parameterIDs::id2enum.end() );
-            m_smootherMap[ parameterIDs::idsenum::dry ] = smootherPtr2;
-            m_paramHandler.addParameter(vts,
-                                        p,
-                                        [ this, smootherPtr2 ]( Sample v )
-                                        {
-                                            v = v < 100.0 ? std::sqrt( 1.0 - v*0.01 ) : 0;
-                                            smootherPtr2->setTargetValue( v );
-                                        });
-
+            val *= 0.01;
+            auto wet = val > 0 ? std::sqrt( val ) : 0;
+            m_wetSmoother.setTargetValue( wet );
+            auto dry = 1.0 - val;
+            dry = dry > 0 ? std::sqrt( dry ) : 0;
+            m_drySmoother.setTargetValue( dry );
         }
-        else if ( parameterIDs::id2ParamTypeEnum.find( id )->second == parameterIDs::paramType::FLOAT )
+        else if ( id == parameterIDs::earlyReflectionLevel )
         {
-            m_smoothers.emplace_back( juce::LinearSmoothedValue< Sample >() );
-            
-            auto* smootherPtr = &m_smoothers[ m_smoothers.size() - 1 ];
-            
-            jassert( parameterIDs::id2enum.find( id ) != parameterIDs::id2enum.end() );
-            m_smootherMap[ parameterIDs::id2enum.find(id)->second ] = smootherPtr;
-            if ( id == parameterIDs::earlyHPFCutoff ||
-                id == parameterIDs::earlyLPFCutoff ||
-                id == parameterIDs::lateHPFCutoff ||
-                id == parameterIDs::lateLPFCutoff ||
-                id == parameterIDs::inputHPFCutoff ||
-                id == parameterIDs::inputLPFCutoff )
-            {
-                m_paramHandler.addParameter(vts,
-                                            p,
-                                            [ this, smootherPtr ]( Sample v ){ smootherPtr->setTargetValue( 1.0 - calculateLPFCoefficient( v, m_SR ) );
-                                                                        });
-                smootherPtr->setCurrentAndTargetValue( 1.0 - calculateLPFCoefficient( val, m_SR ) );
-            }
-            else if ( id == parameterIDs::earlyDiffusion || id == parameterIDs::lateDiffusion )
-            {
-                m_paramHandler.addParameter(vts,
-                                            p,
-                                            [ this, smootherPtr ]( Sample v )
-                                            { smootherPtr->setTargetValue( ( v * 0.006 ) + 0.2 ); });
-                smootherPtr->setCurrentAndTargetValue( ( val * 0.006 ) + 0.2 );
-            }
-            else if ( id == parameterIDs::modDepth )
-            {
-                m_paramHandler.addParameter(vts,
-                                            p,
-                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( std::pow( v*0.008, 2 ) ); });
-                smootherPtr->setCurrentAndTargetValue( std::pow( val*0.008, 2 ) );
-            }
-            else if ( id == parameterIDs::decay )
-            {
-                m_paramHandler.addParameter(vts,
-                                            p,
-                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( v * 1000.0 ); });
-                smootherPtr->setCurrentAndTargetValue( val * 1000.0 );
-            }
-            else if ( id == parameterIDs::size )
-            {
-                m_paramHandler.addParameter(vts,
-                                            p,
-                                            [ this, smootherPtr ]( Sample v )
-                                            {
-                                                v *= 0.01;
-                                                smootherPtr->setTargetValue( v <= 0.5 ? std::pow( 2.0, -( 0.5 - v )*3.0 ) : std::pow( 2.0, v - 0.5 ) ); });
-                val *= 0.1;
-                smootherPtr->setCurrentAndTargetValue( val <= 0.5 ? std::pow( 2.0, -( 0.5 - val )*3.0 ) : std::pow( 2.0, val - 0.5 ) );
-                
-            }
-            else if ( id == parameterIDs::earlyReflectionLevel || id == parameterIDs::lateReflectionLevel )
-            {
-                m_paramHandler.addParameter(vts,
-                                            p,
-                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( std::sqrt( v*0.01 ) ); });
-                smootherPtr->setCurrentAndTargetValue(  std::sqrt( val * 0.01 ) );
-            }
-            else if ( id == parameterIDs::preDelay )
-            {
-                m_paramHandler.addParameter(vts,
-                                            p,
-                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( v * 0.001 * m_SR ); });
-                smootherPtr->setCurrentAndTargetValue( val * 0.001 * m_SR );
-            }
-            else
-            {
-                m_paramHandler.addParameter(vts,
-                                            p,
-                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( v ); });
-                smootherPtr->setCurrentAndTargetValue( val );
-            }
+            m_paramHandler.addParameter(vts,
+                                        p,
+                                        [this](Sample v) { m_erLevelSmoother.setTargetValue( (v>0?std::sqrt(v*0.01):0) ); });
+            m_erLevelSmoother.setCurrentAndTargetValue( (val>0?std::sqrt(val*0.01):0) );
+        }
+        else if( id == parameterIDs::lateReflectionLevel )
+        {
+            m_paramHandler.addParameter(vts,
+                                        p,
+                                        [this](Sample v) { m_lrLevelSmoother.setTargetValue( (v>0?std::sqrt(v*0.01):0) ); });
+            m_lrLevelSmoother.setCurrentAndTargetValue( (val>0?std::sqrt(val*0.01):0) );
+        }
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//========      INPUT PARAMETERS      ==========//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        else if( id == parameterIDs::inputHPFCutoff )
+        {
+            m_paramHandler.addParameter( vts,
+                                         p,
+                                        [this](Sample v){m_inputProcessor.m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+            m_inputProcessor.m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+        }
+        else if( id == parameterIDs::inputLPFCutoff )
+        {
+            m_paramHandler.addParameter(vts,
+                                        p,
+                                        [this](Sample v){m_inputProcessor.m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+            m_inputProcessor.m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+        }
+        else if( id == parameterIDs::preDelay )
+        {
+            m_paramHandler.addParameter(vts, p, [this]( Sample v ) { m_inputProcessor.m_preDelaySmoother.setTargetValue( v * 0.001 * m_SR ); });
+            m_inputProcessor.m_preDelaySmoother.setCurrentAndTargetValue( val * 0.001 * m_SR );
+        }
+        else if ( id == parameterIDs::reverse )
+        {
+            m_paramHandler.addParameter( vts, p, [this]( Sample v ) { m_inputProcessor.setReversed( static_cast< bool >( v ) ); } );
+            m_inputProcessor.setReversed( static_cast< bool >( val ) );
+        }
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//=======      EARLY&LATE PARAMETERS      ======//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        else if ( id == parameterIDs::size )
+        {
+            m_paramHandler.addParameter(vts, p, [this](Sample v)
+                                        {
+                v *= 0.01;
+                v =  (v <= 0.5) ? std::pow( 2.0, -( 0.5 - v )*3.0 ) : std::pow( 2.0, v - 0.5 );
+                m_earlyReflections.m_varHolder.m_sizeSmoother.setTargetValue( v );
+                m_lateReflections.m_varHolder.m_sizeSmoother.setTargetValue( v );
+            });
+            val *= 0.01;
+            val = (val <= 0.5) ? std::pow( 2.0, -( 0.5 - val )*3.0 ) : std::pow( 2.0, val - 0.5 );
+            m_earlyReflections.m_varHolder.m_sizeSmoother.setCurrentAndTargetValue( val );
+            m_lateReflections.m_varHolder.m_sizeSmoother.setCurrentAndTargetValue( val );
+        }
+        else if ( id == parameterIDs::modDepth )
+        {
+            m_paramHandler.addParameter(vts, p, [this](Sample v)
+                                        {
+                auto depth = std::pow( v * 0.008, 2 );
+                m_earlyReflections.m_varHolder.m_modDSmoother.setTargetValue( depth );
+                m_lateReflections.m_varHolder.m_modDSmoother.setTargetValue( depth );
+            });
+            auto depth = std::pow( val * 0.008, 2 );
+            m_earlyReflections.m_varHolder.m_modDSmoother.setCurrentAndTargetValue( depth );
+            m_lateReflections.m_varHolder.m_modDSmoother.setCurrentAndTargetValue( depth );
+        }
+        else if ( id == parameterIDs::modRate )
+        {
+            m_paramHandler.addParameter(vts, p, [this](Sample v)
+                                        {
+                auto coef =  1.0 - calculateLPFCoefficient( v, m_SR );
+                m_earlyReflections.m_varHolder.m_modRSmoother.setTargetValue( v );
+                m_earlyReflections.m_varHolder.m_modDampSmoother.setTargetValue( coef );
+                m_lateReflections.m_varHolder.m_modRSmoother.setTargetValue( v );
+                m_lateReflections.m_varHolder.m_modDampSmoother.setTargetValue( coef );
+            });
+            auto coef = 1.0 - calculateLPFCoefficient( val, m_SR );
+            m_earlyReflections.m_varHolder.m_modRSmoother.setCurrentAndTargetValue( val );
+            m_earlyReflections.m_varHolder.m_modDampSmoother.setCurrentAndTargetValue( coef );
+            m_lateReflections.m_varHolder.m_modRSmoother.setCurrentAndTargetValue( val );
+            m_lateReflections.m_varHolder.m_modDampSmoother.setCurrentAndTargetValue( coef );
         }
         
-        else if ( id == parameterIDs::interpolationType )
-        {
-            m_paramHandler.addParameter(vts,
-                                        p, [ this ]( Sample v )
-                                        {
-                jassert ( parameterIDs::interpMap.find( v ) != parameterIDs::interpMap.end() );
-                m_dspWrap.setInterpolationType( parameterIDs::interpMap.find( v )->second );
-                m_inputProcessor.setInterpolationType( parameterIDs::interpMap.find( v )->second );
-                    } );
-            m_dspWrap.setInterpolationType( parameterIDs::interpMap.find( val )->second );
-            m_inputProcessor.setInterpolationType( parameterIDs::interpMap.find( val )->second );
-        }
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//========      EARLY PARAMETERS      ==========//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
         else if ( id == parameterIDs::earlyReflectionType )
         {
-            m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
+            m_paramHandler.addParameter( vts, p, [this](Sample v)
                                         {
                 jassert( parameterIDs::earlyTypeMap.find( v ) != parameterIDs::earlyTypeMap.end() );
-                auto type = parameterIDs::earlyTypeMap.find( v )->second;
-                m_dspWrap.setEarlyType( type,  m_SR );
-            }
-                                        );
-            m_dspWrap.setEarlyType( parameterIDs::earlyTypeMap.find( static_cast<int>( val ) )->second, m_SR );
+                m_earlyReflections.setEarlyType( parameterIDs::earlyTypeMap.find( v )->second );
+            } );
+            jassert( parameterIDs::earlyTypeMap.find( val ) != parameterIDs::earlyTypeMap.end() );
+            m_earlyReflections.setEarlyType( parameterIDs::earlyTypeMap.find( static_cast<int>( val ) )->second );
         }
+        
+        else if ( id == parameterIDs::earlyDiffusion )
+        {
+            m_paramHandler.addParameter(vts, p, [this]( Sample v ){ m_earlyReflections.m_varHolder.m_diffusionSmoother.setTargetValue( ( v * 0.006 ) + 0.2 ); });
+            m_earlyReflections.m_varHolder.m_diffusionSmoother.setCurrentAndTargetValue( ( val * 0.006 ) + 0.2 );
+        }
+        else if ( id == parameterIDs::earlyHPFCutoff )
+        {
+            m_paramHandler.addParameter( vts,
+                                         p,
+                                        [this](Sample v){m_earlyReflections.m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+            m_earlyReflections.m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+        }
+        else if ( id == parameterIDs::earlyLPFCutoff )
+        {
+            m_paramHandler.addParameter( vts,
+                                         p,
+                                        [this](Sample v){m_earlyReflections.m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+            m_earlyReflections.m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+        }
+        
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//========      LATE PARAMETERS      ===========//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
         else if ( id == parameterIDs::lateReflectionType )
         {
             m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
                                         {
                 jassert( parameterIDs::lateTypeMap.find( v ) != parameterIDs::lateTypeMap.end() );
-                m_dspWrap.setLateType( parameterIDs::lateTypeMap.find( v )->second, m_SR );
+                m_lateReflections.setLateType( parameterIDs::lateTypeMap.find( v )->second );
             } );
-            m_dspWrap.setLateType( parameterIDs::lateTypeMap.find( static_cast<int>( val ) )->second, m_SR );
+            jassert( parameterIDs::earlyTypeMap.find( val ) != parameterIDs::earlyTypeMap.end() );
+            m_lateReflections.setLateType( parameterIDs::lateTypeMap.find( static_cast<int>( val ) )->second );
+        }
+        else if ( id == parameterIDs::lateDiffusion )
+        {
+            m_paramHandler.addParameter(vts, p, [this]( Sample v ){ m_lateReflections.m_varHolder.m_diffusionSmoother.setTargetValue( ( v * 0.006 ) + 0.2 ); });
+            m_lateReflections.m_varHolder.m_diffusionSmoother.setCurrentAndTargetValue( ( val * 0.006 ) + 0.2 );
+        }
+        else if( id == parameterIDs::lateHPFCutoff )
+        {
+            m_paramHandler.addParameter( vts,
+                                         p,
+                                        [this](Sample v){m_lateReflections.m_varHolder.m_hpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+            m_lateReflections.m_varHolder.m_hpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+        }
+        else if( id == parameterIDs::lateLPFCutoff )
+        {
+            m_paramHandler.addParameter( vts,
+                                         p,
+                                        [this](Sample v){m_lateReflections.m_varHolder.m_lpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+            m_lateReflections.m_varHolder.m_lpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+        }
+        else if ( id == parameterIDs::decay )
+        {
+            m_paramHandler.addParameter(vts,
+                                        p,
+                                        [this](Sample v) { m_lateReflections.m_varHolder.m_decaySmoother.setTargetValue( v * 1000.0 ); });
+            m_lateReflections.m_varHolder.m_decaySmoother.setCurrentAndTargetValue( val * 1000.0 );
         }
         else if ( id == parameterIDs::fdnMixType )
         {
-            m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
+            m_paramHandler.addParameter(vts,
+                                        p,
+                                        [this](Sample v)
                                         {
                 jassert( parameterIDs::fdnMixMap.find( v ) != parameterIDs::fdnMixMap.end() );
-                m_dspWrap.setFdnMixType( parameterIDs::fdnMixMap.find(v)->second );
+                m_lateReflections.m_varHolder.fdnMix = parameterIDs::fdnMixMap.find(v)->second;
             } );
-            m_dspWrap.setLateType( parameterIDs::lateTypeMap.find( static_cast<int>( val ) )->second, m_SR );
+            m_lateReflections.m_varHolder.fdnMix = parameterIDs::fdnMixMap.find( static_cast<int>( val ) )->second;
         }
-        else if ( id == parameterIDs::reverse )
+        else if ( id == parameterIDs::feedbackLimit )
         {
             m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
                                         {
-                m_inputProcessor.reverse( static_cast< bool >( v ) );
+                m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( v );
             } );
-            m_inputProcessor.reverse( static_cast< bool >( val ) );
+            m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( val );
         }
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//========      OUTPUT PARAMETERS      =========//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+        //==============//==============//==============//==============//==============//==============//==============//==============
+
+//            else if ( id == parameterIDs::shimmerLevel )
+//            {
+//                m_paramHandler.addParameter(vts,
+//                                            p,
+//                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( 0.707 * std::sqrt( v * 0.001 ) ); });
+//                smootherPtr->setCurrentAndTargetValue( 0.707 * std::sqrt( val * 0.001 ) );
+//            }
+//            else if ( id == parameterIDs::shimmerTransposition )
+//            {
+//                m_paramHandler.addParameter(vts,
+//                                            p,
+//                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( std::pow( 2.0, (v/12.0)) ); });
+//                smootherPtr->setCurrentAndTargetValue( std::pow( 2.0, (val/12.0)) );
+//            }
+//            else
+//            {
+//                m_paramHandler.addParameter(vts,
+//                                            p,
+//                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( v ); });
+//                smootherPtr->setCurrentAndTargetValue( val );
+//            }
+//        }
         else if ( id == parameterIDs::monoLow )
         {
             m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
@@ -344,7 +414,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb< Sample >::createPa
     
     /*                                      SHIMMER                                      */
     params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ parameterIDs::mainName + parameterIDs::shimmerLevel, pIDVersionNumber }, parameterIDs::shimmerLevel, 0.0f, 100.0f, 0.0f) );
-    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ parameterIDs::mainName + parameterIDs::shimmerTransposition, pIDVersionNumber }, parameterIDs::shimmerTransposition, -12.0f, 12.0f, 12.0f) );
+    params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ parameterIDs::mainName + parameterIDs::shimmerTransposition, pIDVersionNumber }, parameterIDs::shimmerTransposition, -12.0f, 12.0f, 0.0f) );
 
     
     /*                                      OUTPUT ETC                                      */

@@ -9,7 +9,7 @@
 #ifndef sjf_verb_inputProcessing_h
 #define sjf_verb_inputProcessing_h
 
-#include "../sjf_audio/sjf_audioUtilities.h"
+#include "../sjf_audio/sjf_audioUtilitiesC++.h"
 #include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_rev.h"
 #include "parameterIDs.h"
@@ -23,16 +23,13 @@ public:
     
     void initialise( Sample sampleRate, int numberOfChannels );
     
-    inline void process( std::vector< Sample >& samples );
+    inline void processBlock( const juce::AudioBuffer< Sample >& inputBuffer, juce::AudioBuffer< Sample >& revBuffer, size_t blockSize );
     
-    void setInterpolationType( sjf_interpolators::interpolatorTypes interpType );
+    void setInterpolationType( sjf::interpolation::interpolatorTypes interpType );
     
-    void reverse( bool shouldReverse);
-    
-    void setPredelayTime( Sample preDelaySamps );
-public:
-    Sample m_preDelayTime{0.0}, m_inputLPFCutoff{0.0}, m_inputHPFCutoff{1.0};
-    
+    void setReversed( bool shouldReverse);
+
+    juce::LinearSmoothedValue< Sample > m_preDelaySmoother, m_LPFSmoother, m_HPFSmoother;
 private:
     Sample m_SR {44100};
     
@@ -42,6 +39,7 @@ private:
     
     unsigned NCHANNELS{2};
     bool m_reversed{false};
+    
 };
 
 #endif /* sjf_verb_inputProcessing_h */
