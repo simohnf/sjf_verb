@@ -12,14 +12,14 @@
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template<typename Sample>
-size_t sjf_verb_lateProcessor<Sample>::initialise( Sample sampleRate, int numberOfChannels )
+
+size_t sjf_verb_lateProcessor::initialise( Sample sampleRate, int numberOfChannels )
 {
     m_SR = sampleRate;
     NCHANNELS = numberOfChannels;
     
     m_varHolder.sampleRate = m_SR;
-    m_varHolder.m_sizeSmoother.reset( m_SR, 0.05 );
+    m_varHolder.m_sizeSmoother.reset( m_SR, 0.2 );
     m_varHolder.m_decaySmoother.reset( m_SR, 0.05 );
     m_varHolder.m_lpfSmoother.reset( m_SR, 0.05 );
     m_varHolder.m_hpfSmoother.reset( m_SR, 0.05 );
@@ -37,8 +37,8 @@ size_t sjf_verb_lateProcessor<Sample>::initialise( Sample sampleRate, int number
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template<typename Sample>
-void sjf_verb_lateProcessor<Sample>::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
+
+void sjf_verb_lateProcessor::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
 {
     switch (m_lateType) {
         case parameterIDs::lateTypesEnum::fdn:
@@ -59,8 +59,8 @@ void sjf_verb_lateProcessor<Sample>::processBlock( juce::AudioBuffer< Sample >& 
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template<typename Sample>
-void sjf_verb_lateProcessor<Sample>::setLateType( parameterIDs::lateTypesEnum type )
+
+void sjf_verb_lateProcessor::setLateType( parameterIDs::lateTypesEnum type )
 {
     m_lateType = type;
     
@@ -85,5 +85,3 @@ void sjf_verb_lateProcessor<Sample>::setLateType( parameterIDs::lateTypesEnum ty
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template class sjf_verb_lateProcessor< float >;
-template class sjf_verb_lateProcessor< double >;

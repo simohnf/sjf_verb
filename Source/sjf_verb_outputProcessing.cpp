@@ -8,34 +8,86 @@
 
 #include "sjf_verb_outputProcessing.h"
 
-template< typename Sample >
-void sjf_verb_outputProcessor< Sample >::initialise( Sample sampleRate, int nChannels )
+
+void sjf_verb_outputProcessor::initialise( Sample sampleRate, int nChannels )
 {
     NCHANNELS = nChannels;
     if ( NCHANNELS != 2)
         setMonoLow( false );
     m_coef = 1.0 - calculateLPFCoefficient< Sample >( 100, sampleRate );
+    
+    for ( auto& s : m_shimVoice )
+    {
+        s.initialise( sampleRate );
+        s.setWindowSize( .5 );
+    }
+    
+    m_shimLevelSmoother.reset( sampleRate, 0.2 );
+    for ( auto& s : m_shimShiftSmoother )
+        s.reset( sampleRate, 0.2 );
 }
 
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-template< typename Sample >
-void sjf_verb_outputProcessor<Sample>::processBlock(juce::AudioBuffer<Sample> &revBuffer, size_t blockSize)
+
+void sjf_verb_outputProcessor::processBlock( juce::AudioBuffer<Sample> &outputBuffer, juce::AudioBuffer<Sample> &revBuffer, size_t blockSize)
 {
-    if (NCHANNELS != 2 || revBuffer.getNumChannels() < 2 )
-        return;
-    if ( m_monoLow )
+    
+    if( m_shimLevelSmoother.getTargetValue() == 0. && m_shimLevelSmoother.getCurrentValue() == 0. )
+        revBuffer.clear();
+    else
     {
+        Sample samp{0}, level{0}, shift0{0}, shift1(0), scale{std::sqrt(static_cast<Sample>(1.0)/NCHANNELS)};
+        if ( m_shimmerDualVoice )
+        {
+            for ( auto i = 0; i < blockSize; i ++ )
+            {
+                level = m_shimLevelSmoother.getNextValue();
+                shift0 = m_shimShiftSmoother[0].getNextValue();
+                shift1 = m_shimShiftSmoother[1].getNextValue();
+                m_shimVoice[ 0 ].setPitchScaling( shift0 );
+                m_shimVoice[ 1 ].setPitchScaling( shift1 );
+                samp  = 0;
+                for ( auto j = 0; j < NCHANNELS; j++ )
+                    samp += outputBuffer.getSample( j, i );
+                samp *= scale;
+                samp = sjf::nonlinearities::tanhSimple( ( m_shimVoice[ 0 ].process( samp ) + m_shimVoice[ 1 ].process( samp ) ) * level );
+                for ( auto j = 0; j < NCHANNELS; j++ )
+                    revBuffer.setSample( j, i, samp );
+            }
+        }
+        else
+        {
+            for ( auto i = 0; i < blockSize; i ++ )
+            {
+                level = m_shimLevelSmoother.getNextValue();
+                shift0 = m_shimShiftSmoother[0].getNextValue();
+                m_shimVoice[ 0 ].setPitchScaling( shift0 );
+                samp  = 0;
+                for ( auto j = 0; j < NCHANNELS; j++ )
+                    samp += outputBuffer.getSample( j, i );
+                samp *= scale;
+                samp = sjf::nonlinearities::tanhSimple( m_shimVoice[ 0 ].process( samp ) * level );
+                for ( auto j = 0; j < NCHANNELS; j++ )
+                    revBuffer.setSample( j, i, samp );
+            }
+        }
+    }
+    
+    if ( m_monoLow && NCHANNELS == 2 )
+    {
+        auto ms = sjf::utilities::MidSide< Sample >::encode( 0, 0 );
+        auto lr = sjf::utilities::MidSide< Sample >::decode( ms );
         for ( auto i = 0; i < blockSize; i ++ )
         {
-            auto ms = sjf::utilities::MidSide< Sample >::encode( revBuffer.getSample( 0, i ), revBuffer.getSample( 1, i ) );
+            ms = sjf::utilities::MidSide< Sample >::encode( outputBuffer.getSample( 0, i ), outputBuffer.getSample( 1, i ) );
             ms.side = m_monoLowFilt.processHP( ms.side, m_coef );
             
-            auto lr = sjf::utilities::MidSide< Sample >::decode( ms );
-            revBuffer.setSample( 0, i, lr.left );
-            revBuffer.setSample( 1, i, lr.right );
+            lr = sjf::utilities::MidSide< Sample >::decode( ms );
+            outputBuffer.setSample( 0, i, lr.left );
+            outputBuffer.setSample( 1, i, lr.right );
         }
     }
 }
@@ -44,46 +96,12 @@ void sjf_verb_outputProcessor<Sample>::processBlock(juce::AudioBuffer<Sample> &r
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 
-
-template < typename Sample >
-void sjf_verb_outputProcessor< Sample >::process( std::vector< Sample >& samples )
-{
-    if ( m_monoLow ){ applyMonoLow( samples ); }
-//    monoLowProcessor( samples );
-}
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-
-
-template < typename Sample >
-void sjf_verb_outputProcessor< Sample >::setMonoLow( bool monoLow )
+void sjf_verb_outputProcessor::setMonoLow( bool monoLow )
 {
     m_monoLow = monoLow;
-//    monoLowProcessor = monoLow && (NCHANNELS==2) ? &sjf_verb_outputProcessor::applyMonoLow : &sjf_verb_outputProcessor::noMonoLow;
 }
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 
-
-template < typename Sample >
-void sjf_verb_outputProcessor< Sample >::applyMonoLow( std::vector< Sample >& samples )
-{
-    auto ms = sjf::utilities::MidSide< Sample >::encode( samples[ 0 ], samples[ 1 ] );
-    ms.side = m_monoLowFilt.processHP( ms.side, m_coef );
-    
-    auto lr = sjf::utilities::MidSide< Sample >::decode( ms );
-    samples[ 0 ] = lr.left;
-    samples[ 1 ] = lr.right;
-}
-
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-
-template class sjf_verb_outputProcessor< float > ;
-template class sjf_verb_outputProcessor< double > ;

@@ -14,31 +14,33 @@
 #include "../sjf_audio/sjf_rev.h"
 #include "parameterIDs.h"
 
-template < typename Sample >
+
 class sjf_verb_outputProcessor
 {
-//    typedef sjf::utilities::classMemberFunctionPointer< sjf_verb_outputProcessor, void, std::vector< Sample >& > memFunc;
+    using Sample = float;
 public:
     sjf_verb_outputProcessor(){}
     ~sjf_verb_outputProcessor(){}
     
     void initialise( Sample sampleRate, int nChannels );
     
-    inline void processBlock( juce::AudioBuffer< Sample >& revBuffer, size_t blockSize );
-    
-    void process( std::vector< Sample >& samples );
+    void processBlock( juce::AudioBuffer< Sample >& outputBuffer, juce::AudioBuffer< Sample >& revBuffer, size_t blockSize );
     
     void setMonoLow( bool monoLow );
     
+    std::array< juce::LinearSmoothedValue<Sample>, 2 > m_shimShiftSmoother;
+    juce::LinearSmoothedValue<Sample> m_shimLevelSmoother;
+    
+    void setShimmerDualVoice( bool dualVoice ){ m_shimmerDualVoice = dualVoice; }
+    
 private:
-    void applyMonoLow( std::vector< Sample >& samples );
-    void noMonoLow( std::vector< Sample >& samples ) { return; }
     
     size_t NCHANNELS{2};
-    bool m_monoLow{false};
+    bool m_monoLow{false}, m_shimmerDualVoice{false};
+    std::array< sjf::delayLine::pitchShift<Sample>, 2 > m_shimVoice;
     sjf::filters::damper< Sample > m_monoLowFilt;
     Sample m_coef{0.1};
-//    memFunc monoLowProcessor{this, &sjf_verb_outputProcessor::noMonoLow};
+    
     
 };
 

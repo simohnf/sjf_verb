@@ -14,16 +14,16 @@
 #include "../sjf_audio/sjf_rev.h"
 #include "parameterIDs.h"
 
-template< typename Sample >
 class sjf_verb_inputProcessor
 {
+    using Sample = float;
 public:
     sjf_verb_inputProcessor(){}
     ~sjf_verb_inputProcessor(){}
     
     void initialise( Sample sampleRate, int numberOfChannels );
     
-    inline void processBlock( const juce::AudioBuffer< Sample >& inputBuffer, juce::AudioBuffer< Sample >& revBuffer, size_t blockSize );
+    void processBlock( juce::AudioBuffer< Sample >& revBuffer, size_t blockSize );
     
     void setInterpolationType( sjf::interpolation::interpolatorTypes interpType );
     
@@ -37,7 +37,7 @@ private:
     std::vector< sjf::delayLine::reverseDelay< Sample > > m_preDelays;
     std::vector< sjf::filters::damper< Sample > > m_inputLPF, m_inputHPF;
     
-    unsigned NCHANNELS{2};
+    size_t NCHANNELS{2};
     bool m_reversed{false};
     
 };

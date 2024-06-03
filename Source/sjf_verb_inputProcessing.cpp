@@ -12,17 +12,18 @@
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-template< typename Sample >
-void sjf_verb_inputProcessor< Sample >::initialise( Sample sampleRate, int numberOfChannels )
+
+void sjf_verb_inputProcessor::initialise( Sample sampleRate, int numberOfChannels )
 {
     m_SR = sampleRate;
     NCHANNELS = numberOfChannels;
     
-    m_preDelays.resize( NCHANNELS );
+//    if( m_preDelays.size() != NCHANNELS )
+        m_preDelays.resize( NCHANNELS );
     for ( auto & pd : m_preDelays )
         pd.initialise( m_SR * 0.5, m_SR*0.001 );
     
-    m_preDelaySmoother.reset( m_SR, 0.05 );
+    m_preDelaySmoother.reset( m_SR, 0.2 );
     m_LPFSmoother.reset( m_SR, 0.05 );
     m_HPFSmoother.reset( m_SR, 0.05 );
     
@@ -30,21 +31,13 @@ void sjf_verb_inputProcessor< Sample >::initialise( Sample sampleRate, int numbe
     m_inputHPF.resize( numberOfChannels );
     
 }
+
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-template< typename Sample >
-void sjf_verb_inputProcessor< Sample >::setInterpolationType( sjf::interpolation::interpolatorTypes interpType )
-{
-    for ( auto & i : m_preDelays ){ i.setInterpolationType( sjf::interpolation::interpolatorTypes::none ); }
-}
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-template < typename Sample >
-void sjf_verb_inputProcessor< Sample >::processBlock(const juce::AudioBuffer<Sample> &inputBuffer, juce::AudioBuffer<Sample> &revBuffer, size_t blockSize )
+
+void sjf_verb_inputProcessor::processBlock( juce::AudioBuffer<Sample> &revBuffer, size_t blockSize )
 {
     Sample samp = 0.0, pdDT = 0, lpfCO = 0, hpfCO= 0;
     if ( m_reversed )
@@ -55,7 +48,7 @@ void sjf_verb_inputProcessor< Sample >::processBlock(const juce::AudioBuffer<Sam
             for ( auto c = 0; c < NCHANNELS; c++ )
             {
                 m_preDelays[ c ].setDelayTime( pdDT );
-                m_preDelays[ c ].setSample( inputBuffer.getSample( c, i ) );
+                m_preDelays[ c ].setSample( revBuffer.getSample( c, i ) );
                 revBuffer.setSample( c, i, m_preDelays[ c ].getSampleReversed() );
             }
         }
@@ -68,7 +61,7 @@ void sjf_verb_inputProcessor< Sample >::processBlock(const juce::AudioBuffer<Sam
             for ( auto c = 0; c < NCHANNELS; c++ )
             {
                 m_preDelays[ c ].setDelayTime( pdDT );
-                m_preDelays[ c ].setSample( inputBuffer.getSample( c, i ) );
+                m_preDelays[ c ].setSample( revBuffer.getSample( c, i ) );
                 revBuffer.setSample( c, i, m_preDelays[ c ].getSample() );
             }
         }
@@ -93,8 +86,8 @@ void sjf_verb_inputProcessor< Sample >::processBlock(const juce::AudioBuffer<Sam
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 
-template < typename Sample >
-void sjf_verb_inputProcessor< Sample >::setReversed( bool shouldReverse)
+
+void sjf_verb_inputProcessor::setReversed( bool shouldReverse)
 {
     m_reversed = shouldReverse;
 }
@@ -102,9 +95,3 @@ void sjf_verb_inputProcessor< Sample >::setReversed( bool shouldReverse)
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-
-
-
-
-template class sjf_verb_inputProcessor< float > ;
-template class sjf_verb_inputProcessor< double > ;

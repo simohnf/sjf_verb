@@ -16,9 +16,10 @@
 #include "parameterIDs.h"
 #include "sjf_verb_earlyProcessor_DSP_Wrappers.h"
 
-template < typename Sample >
+
 class sjf_verb_earlyProcessor
 {
+    using Sample = float;
     using LSV = juce::LinearSmoothedValue< Sample >;
     using randArray = sjf::ctr::rArray< Sample, 4096, UNIX_TIMESTAMP +'e'+'a'+'r'+'l'+'y' >;
     
@@ -52,7 +53,7 @@ private:
 
     size_t NCHANNELS{2};
     size_t rdd_NCHANNELS{8}, rdd_NSTAGES{5};
-    size_t mt_NTAPS{32};
+    size_t mt_NTAPS{64};
     size_t sap_NSTAGES{8};
 
     parameterIDs::earlyTypesEnum m_earlyType{ parameterIDs::earlyTypesEnum::rotDelDif };

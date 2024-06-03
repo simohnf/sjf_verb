@@ -25,12 +25,10 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
 {
     auto params = getParameters();
     m_rev.addParametersToHandler( valueTreeState, params );
-    
 }
 
 Sjf_verbAudioProcessor::~Sjf_verbAudioProcessor()
-{
-}
+{ }
 
 //==============================================================================
 const juce::String Sjf_verbAudioProcessor::getName() const
@@ -139,12 +137,8 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-    {
         buffer.clear (i, 0, buffer.getNumSamples());
-    }
     
-//    setReverbParameters();
-//
     m_rev.processBlock( buffer );
 }
 
@@ -194,5 +188,5 @@ juce::AudioProcessorValueTreeState::ParameterLayout Sjf_verbAudioProcessor::crea
 //
 //    return params;
 
-    return sjf_verb< SAMPLETYPE >::createParameterLayout();
+    return sjf_verb::createParameterLayout();
 }

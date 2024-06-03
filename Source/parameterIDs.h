@@ -45,6 +45,7 @@ namespace parameterIDs
 
     static const juce::String shimmerLevel = "ShimmerLevel"; //y
     static const juce::String shimmerTransposition = "ShimmerTransposition"; //y
+    static const juce::String shimmerDualVoice = "ShimmerDualVoice"; //y
 
     static const juce::String interpolationType = "interpolationType";
     static const juce::String feedbackLimit = "FeedbackLimit";
@@ -82,6 +83,7 @@ namespace parameterIDs
 
         shimmerLevel,
         shimmerTransposition,
+        shimmerDualVoice,
         
         interpolationType,
         feedbackLimit,
@@ -119,6 +121,7 @@ namespace parameterIDs
         
         { shimmerLevel, idsenum::shimmerLevel },
         { shimmerTransposition, idsenum::shimmerTransposition },
+        { shimmerDualVoice, idsenum::shimmerDualVoice },
         
         { interpolationType, idsenum::interpolationType },
         { feedbackLimit, idsenum::feedbackLimit },
@@ -159,6 +162,7 @@ namespace parameterIDs
         
         { shimmerLevel, paramType::FLOAT },
         { shimmerTransposition, paramType::FLOAT },
+        { shimmerDualVoice, paramType::BOOLEAN },
         
         { interpolationType, paramType::CHOICE },
         { feedbackLimit, paramType::BOOLEAN },

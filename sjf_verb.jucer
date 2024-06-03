@@ -24,10 +24,6 @@
             file="Source/sjf_verb_inputProcessing.cpp"/>
       <FILE id="n9uba8" name="sjf_verb_inputProcessing.h" compile="0" resource="0"
             file="Source/sjf_verb_inputProcessing.h"/>
-      <FILE id="vO7veF" name="sjf_verb_dspWrapper.cpp" compile="1" resource="0"
-            file="Source/sjf_verb_dspWrapper.cpp"/>
-      <FILE id="TfZfqy" name="sjf_verb_dspWrapper.h" compile="0" resource="0"
-            file="Source/sjf_verb_dspWrapper.h"/>
       <FILE id="KtPK18" name="sjf_verb_earlyProcessing.cpp" compile="1" resource="0"
             file="Source/sjf_verb_earlyProcessing.cpp"/>
       <FILE id="dXgVka" name="sjf_verb_earlyProcessing.h" compile="0" resource="0"

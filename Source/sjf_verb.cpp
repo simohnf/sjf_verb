@@ -11,7 +11,6 @@
 #include "../sjf_audio/sjf_audioUtilitiesC++.h"
 #include "../sjf_audio/sjf_parameterHandler.h"
 #include "../sjf_audio/sjf_rev.h"
-//#include "../sjf_audio/sjf_lpf.h"
 
 
 //=============================//=============================//=============================//=============================
@@ -19,16 +18,10 @@
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename Sample >
-void sjf_verb< Sample >::initialise( Sample sampleRate, int samplesPerBlock, int numberOfChannels )
+
+void sjf_verb::initialise( Sample sampleRate, int samplesPerBlock, int numberOfChannels )
 {
     m_SR = sampleRate > 0 ? sampleRate : m_SR;
-//    for ( auto& s : m_smoothers )
-//    {
-//        s.reset( m_SR, 0.05 );
-//        s.setCurrentAndTargetValue( s.getTargetValue() );
-//    }
-//
     m_erLevelSmoother.reset( m_SR, 0.05 );
     m_lrLevelSmoother.reset( m_SR, 0.05 );
     m_drySmoother.reset( m_SR, 0.05 );
@@ -38,31 +31,30 @@ void sjf_verb< Sample >::initialise( Sample sampleRate, int samplesPerBlock, int
     auto nInternalChannels = m_earlyReflections.initialise( m_SR, numberOfChannels);
     nInternalChannels = std::max( nInternalChannels, m_lateReflections.initialise( m_SR, numberOfChannels ) );
     m_outputProcessor.initialise( m_SR, numberOfChannels );
-//    auto nChans = m_dspWrap.initialise( m_SR, numberOfChannels );
-//    m_samples.resize( nChans, 0 );
-//    m_inSamps.resize( numberOfChannels, 0 );
-//    m_outSamps.resize( numberOfChannels, 0 );
-    
-    m_revBuffer.setSize( nInternalChannels, samplesPerBlock );
-    m_outputBuffer.setSize( nInternalChannels, samplesPerBlock );
+    m_revBuffer.setSize( static_cast<int>(nInternalChannels), samplesPerBlock );
+    m_outputBuffer.setSize( static_cast<int>(nInternalChannels), samplesPerBlock );
 }
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template < typename Sample >
-inline void sjf_verb< Sample >::processBlock( juce::AudioBuffer< Sample >& buffer )
+
+void sjf_verb::processBlock( juce::AudioBuffer< Sample >& buffer )
 {
     m_paramHandler.triggerCallbacks();
     
     auto blockSize = buffer.getNumSamples();
     auto channels = buffer.getNumChannels();
-    Sample mR{0.0}, erLev = 0, lrLev = 0, dryLev = 0, wetLev = 0;
+    auto intetrnalChannels = m_revBuffer.getNumChannels();
+    Sample erLev = 0, lrLev = 0, dryLev = 0, wetLev = 0;
     
-    m_revBuffer.clear();
-//    m_outputBuffer.clear();
-    m_inputProcessor.processBlock( buffer, m_revBuffer, blockSize );
+    for ( auto i = 0; i < channels; i++ )
+        m_revBuffer.addFrom( i, 0, buffer, i, 0, blockSize );
+//        m_revBuffer.copyFrom( i, 0, buffer, i, 0, blockSize );
+    for ( auto i = channels; i < intetrnalChannels; i++ )
+        m_revBuffer.clear( i, 0, m_revBuffer.getNumSamples() );
+    m_inputProcessor.processBlock( m_revBuffer, blockSize );
     m_earlyReflections.processBlock( m_revBuffer, blockSize );
     m_outputBuffer.makeCopyOf( m_revBuffer );
         
@@ -76,7 +68,7 @@ inline void sjf_verb< Sample >::processBlock( juce::AudioBuffer< Sample >& buffe
             m_outputBuffer.setSample( c, i, m_outputBuffer.getSample( c, i )*erLev + m_revBuffer.getSample( c, i )*lrLev );
     }
 
-    m_outputProcessor.processBlock( m_outputBuffer, blockSize );
+    m_outputProcessor.processBlock( m_outputBuffer, m_revBuffer, blockSize );
     
     for ( auto i = 0; i < blockSize; i++ )
     {
@@ -91,15 +83,11 @@ inline void sjf_verb< Sample >::processBlock( juce::AudioBuffer< Sample >& buffe
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template < typename Sample >
-void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeState &vts,  juce::Array<juce::AudioProcessorParameter*>& params )
+
+void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts,  juce::Array<juce::AudioProcessorParameter*>& params )
 {
-//    m_smoothers.reserve( params.size() ); // ensure vectore doesn't get moved... because then weird things happen!!!
-    // first ensure correct early and late algorithms are loaded
-    
     for ( auto& p : params )
     {
-        // VAL CALCULATION NOW CORRECT BUT NEED TO MAKE SURE INITIAL VALUES ARE SCALES APPROPRIATELY!!!!
         auto val = sjf::juceStuff::getUnNormalisedParameterValue< Sample >( p );
         auto id = static_cast< juce::AudioProcessorParameterWithID* >( p )->getParameterID();
         id = id.substring( parameterIDs::mainName.length() );
@@ -273,28 +261,27 @@ void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeSt
         }
         else if ( id == parameterIDs::lateDiffusion )
         {
-            m_paramHandler.addParameter(vts, p, [this]( Sample v ){ m_lateReflections.m_varHolder.m_diffusionSmoother.setTargetValue( ( v * 0.006 ) + 0.2 ); });
+            m_paramHandler.addParameter(vts, p, [this]( Sample v ) {
+                m_lateReflections.m_varHolder.m_diffusionSmoother.setTargetValue( ( v * 0.006 ) + 0.2 ); } );
             m_lateReflections.m_varHolder.m_diffusionSmoother.setCurrentAndTargetValue( ( val * 0.006 ) + 0.2 );
         }
         else if( id == parameterIDs::lateHPFCutoff )
         {
             m_paramHandler.addParameter( vts,
                                          p,
-                                        [this](Sample v){m_lateReflections.m_varHolder.m_hpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+                                        [this](Sample v) {m_lateReflections.m_varHolder.m_hpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
             m_lateReflections.m_varHolder.m_hpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
         }
         else if( id == parameterIDs::lateLPFCutoff )
         {
             m_paramHandler.addParameter( vts,
                                          p,
-                                        [this](Sample v){m_lateReflections.m_varHolder.m_lpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+                                        [this](Sample v) {m_lateReflections.m_varHolder.m_lpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
             m_lateReflections.m_varHolder.m_lpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
         }
         else if ( id == parameterIDs::decay )
         {
-            m_paramHandler.addParameter(vts,
-                                        p,
-                                        [this](Sample v) { m_lateReflections.m_varHolder.m_decaySmoother.setTargetValue( v * 1000.0 ); });
+            m_paramHandler.addParameter(vts, p, [this](Sample v) { m_lateReflections.m_varHolder.m_decaySmoother.setTargetValue( v * 1000.0 ); });
             m_lateReflections.m_varHolder.m_decaySmoother.setCurrentAndTargetValue( val * 1000.0 );
         }
         else if ( id == parameterIDs::fdnMixType )
@@ -310,10 +297,7 @@ void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeSt
         }
         else if ( id == parameterIDs::feedbackLimit )
         {
-            m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
-                                        {
-                m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( v );
-            } );
+            m_paramHandler.addParameter( vts, p, [ this ]( Sample v ) { m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( v ); } );
             m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( val );
         }
         //==============//==============//==============//==============//==============//==============//==============//==============
@@ -321,36 +305,26 @@ void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeSt
         //==============//==============//========      OUTPUT PARAMETERS      =========//==============//==============//==============
         //==============//==============//==============//==============//==============//==============//==============//==============
         //==============//==============//==============//==============//==============//==============//==============//==============
-
-//            else if ( id == parameterIDs::shimmerLevel )
-//            {
-//                m_paramHandler.addParameter(vts,
-//                                            p,
-//                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( 0.707 * std::sqrt( v * 0.001 ) ); });
-//                smootherPtr->setCurrentAndTargetValue( 0.707 * std::sqrt( val * 0.001 ) );
-//            }
-//            else if ( id == parameterIDs::shimmerTransposition )
-//            {
-//                m_paramHandler.addParameter(vts,
-//                                            p,
-//                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( std::pow( 2.0, (v/12.0)) ); });
-//                smootherPtr->setCurrentAndTargetValue( std::pow( 2.0, (val/12.0)) );
-//            }
-//            else
-//            {
-//                m_paramHandler.addParameter(vts,
-//                                            p,
-//                                            [ this, smootherPtr ]( Sample v ) { smootherPtr->setTargetValue( v ); });
-//                smootherPtr->setCurrentAndTargetValue( val );
-//            }
-//        }
         else if ( id == parameterIDs::monoLow )
         {
-            m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
-                                        {
-                m_outputProcessor.setMonoLow( static_cast< bool >( v ) );
-            } );
+            m_paramHandler.addParameter( vts, p, [ this ]( Sample v ) { m_outputProcessor.setMonoLow( static_cast< bool >( v ) ); } );
             m_outputProcessor.setMonoLow( static_cast< bool >( val ) );
+        }
+        
+        else if( id == parameterIDs::shimmerLevel )
+        {
+            m_paramHandler.addParameter( vts, p, [this]( Sample v ) { m_outputProcessor.m_shimLevelSmoother.setTargetValue( std::pow( v*0.003, 2 ) ); } );
+            m_outputProcessor.m_shimLevelSmoother.setCurrentAndTargetValue( std::pow( val*0.003, 2 ) );
+        }
+        
+        else if( id == parameterIDs::shimmerTransposition )
+        {
+            m_paramHandler.addParameter( vts, p, [this]( Sample v ) {
+                m_outputProcessor.m_shimShiftSmoother[0].setTargetValue( std::pow( 2.0, v/12.0 ) );
+                m_outputProcessor.m_shimShiftSmoother[1].setTargetValue( std::pow( 2.0, -v/12.0 ) );
+            } );
+            m_outputProcessor.m_shimShiftSmoother[0].setTargetValue( std::pow( 2.0, val/12.0 ) );
+            m_outputProcessor.m_shimShiftSmoother[1].setTargetValue( std::pow( 2.0, -val/12.0 ) );
         }
     }
 }
@@ -359,8 +333,8 @@ void sjf_verb< Sample >::addParametersToHandler( juce::AudioProcessorValueTreeSt
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template < typename Sample >
-juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb< Sample >::createParameterLayout( )
+
+juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb::createParameterLayout( )
 {
     juce::AudioProcessorValueTreeState::ParameterLayout params;
     
@@ -415,7 +389,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb< Sample >::createPa
     /*                                      SHIMMER                                      */
     params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ parameterIDs::mainName + parameterIDs::shimmerLevel, pIDVersionNumber }, parameterIDs::shimmerLevel, 0.0f, 100.0f, 0.0f) );
     params.add( std::make_unique<juce::AudioParameterFloat> (juce::ParameterID{ parameterIDs::mainName + parameterIDs::shimmerTransposition, pIDVersionNumber }, parameterIDs::shimmerTransposition, -12.0f, 12.0f, 0.0f) );
-
+    params.add( std::make_unique<juce::AudioParameterBool>(juce::ParameterID{ parameterIDs::mainName + parameterIDs::shimmerDualVoice, pIDVersionNumber }, parameterIDs::shimmerDualVoice, false) );
     
     /*                                      OUTPUT ETC                                      */
     params.add( std::make_unique<juce::AudioParameterBool> (juce::ParameterID{ parameterIDs::mainName + parameterIDs::monoLow, pIDVersionNumber }, parameterIDs::monoLow, false) );
@@ -431,9 +405,4 @@ juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb< Sample >::createPa
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-
-
-
-template class sjf_verb<  float >;
-template class sjf_verb<  double >;
 

@@ -11,15 +11,15 @@
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-template < typename Sample >
-size_t sjf_verb_earlyProcessor< Sample >::initialise( Sample sampleRate, int numberOfChannels )
+
+size_t sjf_verb_earlyProcessor::initialise( Sample sampleRate, int numberOfChannels )
 {
     m_SR = sampleRate;
     NCHANNELS = numberOfChannels;
     m_varHolder.sampleRate = m_SR;
     m_LPFSmoother.reset( m_SR, 0.05 );
     m_HPFSmoother.reset( m_SR, 0.05 );
-    m_varHolder.m_sizeSmoother.reset( m_SR, 0.05 );
+    m_varHolder.m_sizeSmoother.reset( m_SR, 0.2 );
     m_varHolder.m_modDSmoother.reset( m_SR, 0.05 );
     m_varHolder.m_modRSmoother.reset( m_SR, 0.05 );
     m_varHolder.m_modDampSmoother.reset( m_SR, 0.05 );
@@ -36,8 +36,8 @@ size_t sjf_verb_earlyProcessor< Sample >::initialise( Sample sampleRate, int num
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-template < typename Sample >
-void sjf_verb_earlyProcessor< Sample >::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
+
+void sjf_verb_earlyProcessor::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
 {
     switch ( m_earlyType ) {
         case parameterIDs::earlyTypesEnum::multitap:
@@ -64,8 +64,8 @@ void sjf_verb_earlyProcessor< Sample >::processBlock( juce::AudioBuffer< Sample 
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-template < typename Sample >
-void sjf_verb_earlyProcessor< Sample >::filterBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
+
+void sjf_verb_earlyProcessor::filterBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
 {
     jassert( buffer.getNumChannels() == rdd_NCHANNELS );
     Sample samp = 0, lpfCO = 0, hpfCO = 0;
@@ -92,8 +92,8 @@ void sjf_verb_earlyProcessor< Sample >::filterBlock( juce::AudioBuffer< Sample >
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename Sample >
-void sjf_verb_earlyProcessor< Sample >::setEarlyType( parameterIDs::earlyTypesEnum type  )
+
+void sjf_verb_earlyProcessor::setEarlyType( parameterIDs::earlyTypesEnum type  )
 {
     m_earlyType = type;
     switch ( m_earlyType ) {
@@ -121,13 +121,4 @@ void sjf_verb_earlyProcessor< Sample >::setEarlyType( parameterIDs::earlyTypesEn
         default:
             break;
     }
-//    initialiseEarlyDSP( sampleRate );
-    
-
-//    initialiseDelayTimes( sampleRate );
 }
-
-
-template class sjf_verb_earlyProcessor< float >;
-template class sjf_verb_earlyProcessor< double >;
-
