@@ -22,8 +22,57 @@ namespace lateDSP
     using phasor = sjf::oscillators::phasor< Sample >;
     template <typename Sample>
     using modulator = sjf::rev::dtModulatorVoice< Sample >;
+    static constexpr size_t PRIME_MAX{10000};
+    using primeArray = sjf::utilities::primes<PRIME_MAX>;
 
-    using primeArray = sjf::utilities::primes<10000>;
+    //======================//======================//======================//======================//======================
+    //======================//======================//======================//======================//======================
+    //======================//======================//======================//======================//======================
+    //======================//======================//======================//======================//======================
+    struct primeDelayTimes
+    {
+        primeDelayTimes() : nPrimes(m_primes.getNPrimes()), m_used(m_primes.getNPrimes(), false), m_powers(m_primes.getNPrimes(), 0){}
+        ~primeDelayTimes(){}
+        
+        size_t closestPower( const size_t target )
+        {
+            auto output = 0;
+            auto n = 0;
+            auto pn = static_cast<size_t>(0);
+            auto pow = 1;
+            auto diff = target;
+            for ( auto i = 0; i < nPrimes; ++i )
+            {
+                if( !m_used[i] )
+                {
+                    pow = 1;
+                    pn = m_primes.nthPrime( i );
+                    while ( std::pow(pn, pow) < target )
+                        ++pow;
+                    pow = (pow == 1) ? 1 : target - std::pow(pn, pow-1) < std::pow(pn, pow) -target ? pow-1 : pow;
+//                    pow = std::max(1, target - std::pow(pn, pow - 1) < std::pow(pn, pow) ? pow-1 : pow);
+//                    pow = pow > 0 ? pow : 1;
+                    auto newVal = std::pow(pn, pow);
+                    auto newDiff = target > newVal ? target - newVal : newVal - target;
+                    if(  newDiff < diff )
+                    {
+                        output = newVal;
+                        diff = newDiff;
+                        n = i;
+                    }
+                }
+            }
+            m_used[ n ] = true;
+            return output > 0 ? output : target;
+        }
+    private:
+        static constexpr primeArray m_primes;
+        const size_t nPrimes;
+        std::vector<bool> m_used;
+        std::vector<size_t> m_powers;
+    };
+
+
 
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
@@ -55,11 +104,12 @@ namespace lateDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template<typename Sample>
+    template<typename Sample, typename MIXER = sjf::mixers::Householder<Sample> >
     struct fdnWrapper
     {
         fdnWrapper( const size_t nChannels, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), fdn(nChannels)
         {
+            primeDelayTimes pdt;
             auto randCount = 0;
             static constexpr Sample MAXDELAYTIMEMS = 100;
             const auto maxDtSamps = MAXDELAYTIMEMS * 0.001 * sampleRate;
@@ -73,11 +123,11 @@ namespace lateDSP
             for ( auto i = 0; i < NCHANNELS; ++i )
             {
                 /* Delay */
-                m_DTs[ i ] = ( (rArr[ ++randCount ] * 0.5) + 0.5 ) * maxDtSamps;
+                m_DTs[ i ] = pdt.closestPower( ( (rArr[ ++randCount ] * 0.4) + 0.6 ) * maxDtSamps );
                 fdn.setDelayTime( m_DTs[ i ], i );
                 m_modulators[ i ].initialise( moffset * i, m_DTs[ i ] );
                 /* Allpass */
-                m_apDTs[ i ] = ( (rArr[ ++randCount ] * 0.5) + 0.5 ) * maxDtAPSamps;
+                m_apDTs[ i ] = pdt.closestPower( ( (rArr[ ++randCount ] * 0.5) + 0.5 ) * maxDtAPSamps );
                 fdn.setAPTime( m_apDTs[ i + NCHANNELS ], i );
                 m_apModulators[ i ].initialise( moffset * ( i + NCHANNELS ), m_apDTs[ i ] );
             }
@@ -113,11 +163,9 @@ namespace lateDSP
         
     private:
         const size_t NCHANNELS;
-        sjf::rev::fdn<Sample> fdn;
+        sjf::rev::fdn<Sample, MIXER> fdn;
         vect<Sample> m_DTs, m_apDTs;
         vect< modulator<Sample> > m_modulators, m_apModulators;
-        
-        static constexpr primeArray m_primes;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
@@ -128,6 +176,7 @@ namespace lateDSP
     {
         apLoopWrapper( const size_t nChannels, const size_t nStages, const size_t apPerStage, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), APPERSTAGE(apPerStage), apLoop(nStages, apPerStage)
         {
+            primeDelayTimes pdt;
             auto randCount = 0;
             static constexpr Sample MAXDELAYTIMEMS = 100;
             const auto maxDtSamps = MAXDELAYTIMEMS * 0.001 * sampleRate;
@@ -137,7 +186,8 @@ namespace lateDSP
             auto moffset = 1.0 / static_cast< Sample >( NSTAGES*( APPERSTAGE+1 ) );
             for ( auto i = 0; i < NSTAGES; ++i )
             {
-                auto targetTime = ((rArr[ ++randCount ] * 0.6) + 0.4 ) * maxDtSamps;
+//                auto targetTime = ((rArr[ ++randCount ] * 0.6) + 0.4 ) * maxDtSamps;
+                auto targetTime = pdt.closestPower( ((rArr[ ++randCount ] * 0.6) + 0.4 ) * maxDtSamps );
                 m_DTs[ i ][ APPERSTAGE ] = targetTime; // decay time needs to be a little less than sum of preceeding APs
     //            DO MODULATOR
                 m_modulators[ i ][ APPERSTAGE ].initialise( moffset*(i*(APPERSTAGE+1) + APPERSTAGE ), targetTime );
@@ -149,6 +199,7 @@ namespace lateDSP
                     if ( j == APPERSTAGE-1)
                         while ( APTime <= targetTime )
                             APTime *= 1.5;
+                    APTime = pdt.closestPower( APTime );
                     m_DTs[ i ][ j ] = APTime;
                     apLoop.setDelayTimeSamples( APTime, i, j );
                     m_modulators[ i ][ j ].initialise( moffset*(i*(APPERSTAGE+1) + j ), APTime );
@@ -191,8 +242,6 @@ namespace lateDSP
         sjf::rev::allpassLoop<Sample> apLoop;
         twoDArray<Sample> m_DTs;
         twoDArray< modulator<Sample> > m_modulators;
-        
-        static constexpr primeArray m_primes;
     };
 }
 

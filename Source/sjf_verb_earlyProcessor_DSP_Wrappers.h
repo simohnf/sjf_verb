@@ -67,19 +67,23 @@ namespace earlyDSP
             for ( auto i = 0; i < NSTAGES; ++i )
             {
                 /* SHUFFLE */
-                std::iota( channelShuffle.begin(), channelShuffle.end(), 0 );
-                for ( auto j = 0; j < NSTAGES-1; ++j )
-                    std::swap( channelShuffle[ j ], channelShuffle[ (static_cast< int >( rArr[ ++randCount ] * ( NSTAGES - j ) ) + j) ] );
-                rdd.setRotationMatrix( channelShuffle, i );
+//                std::iota( channelShuffle.begin(), channelShuffle.end(), 0 );
+//                for ( auto j = 0; j < NSTAGES-1; ++j )
+//                    std::swap( channelShuffle[ j ], channelShuffle[ (static_cast< int >( rArr[ ++randCount ] * ( NSTAGES - j ) ) + j) ] );
+//                rdd.setRotationMatrix( channelShuffle, i );
                 Sample chanLen = stageLen / NCHANNELS;
-    //            DO MODULATORS
+                // generate delay times and then shuffle
+                for ( auto j = 0; j < NCHANNELS; ++j )
+                    m_DTs[ i ][ j ] = ( rArr[ ++randCount ] * chanLen ) + ( chanLen * j );
+                for ( auto j = 0; j < NCHANNELS-1; ++j )
+                    std::swap( m_DTs[ i ][ j ], m_DTs[ i ][ (static_cast< int >( rArr[ ++randCount ] * ( NCHANNELS - j ) ) + j) ] );
                 for ( auto j = 0; j < NCHANNELS; ++j )
                 {
                     /* POLARITY FLIPS */
                     rdd.setPolarityFlip( (rArr[ ++randCount ] >= 0.7), i, j );
                     
                     /* VELVET NOISE DELAY TIMES */
-                    m_DTs[ i ][ j ] = ( rArr[ ++randCount ] * chanLen ) + ( chanLen * j );
+//                    m_DTs[ i ][ j ] = ( rArr[ ++randCount ] * chanLen ) + ( chanLen * j );
                     rdd.setDelayTime( m_DTs[ i ][ j ], i, j );
                     m_modulators[ i ][ j ].initialise( moffset * (j + i*NCHANNELS), m_DTs[ i ][ j ] );;
                 }
@@ -136,9 +140,10 @@ namespace earlyDSP
                     mt[ i ].setDelayTimeSamps( m_DTs[ i ][ j ], j );
                     
                     auto g = static_cast< Sample > ( ( NTAPS + 1 ) - j ) / static_cast< Sample > ( NTAPS + 1 );
+                    sum += g;
                     g *= (rArr[ ++randCount ] < 0.666) ? g : -g; // exponential decay
                     m_gains[ i ][ j ] = g;
-                    sum += g;
+                    
                 }
                 
 //                auto invSum = Sample{1.0/sum};
