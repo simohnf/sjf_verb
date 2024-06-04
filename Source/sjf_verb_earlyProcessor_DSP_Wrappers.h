@@ -145,9 +145,6 @@ namespace earlyDSP
                     m_gains[ i ][ j ] = g;
                     
                 }
-                
-//                auto invSum = Sample{1.0/sum};
-//                auto invSum = Sample{1};
                 auto invSum { std::sqrt(1.0/sum) };
                 for ( auto j = 0; j < NTAPS; ++j )
                 {
@@ -261,12 +258,11 @@ namespace earlyDSP
                     mt[ i ].setDelayTimeSamps( m_mtDTs[ i ][ j ], j );
                     
                     auto g = static_cast< Sample > ( ( NTAPS + 1 ) - j ) / static_cast< Sample > ( NTAPS + 1 );
+                    sum += g;
                     g *= (rArr[ ++randCount ] < 0.666) ? g : -g; // exponential decay
                     m_mtGains[ i ][ j ] = g;
-                    sum += g;
                 }
-//                auto invSum = Sample{1.0/sum};
-//                auto invSum = Sample{1};
+
                 auto invSum { std::sqrt(1.0/sum) };
                 for ( auto j = 0; j < NTAPS; ++j )
                 {
