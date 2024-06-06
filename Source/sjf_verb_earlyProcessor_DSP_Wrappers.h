@@ -52,7 +52,7 @@ namespace earlyDSP
     template< typename Sample >
     struct rddWrapper
     {
-        rddWrapper( const size_t nChannels, const size_t nStages, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), rdd(nChannels,nStages)
+        rddWrapper( const size_t nChannels, const size_t nStages, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), NMODCHANNELS(std::sqrt(NCHANNELS)), rdd(NCHANNELS,NSTAGES,NMODCHANNELS)
         {
             auto randCount = 0;
             static constexpr Sample MAXDELAYTIMEMS = 100;
@@ -60,17 +60,13 @@ namespace earlyDSP
             rdd.initialise( sampleRate, maxDtSamps*2 );
             
             sjf::utilities::vectorResize( m_DTs, NSTAGES, NCHANNELS, static_cast<Sample>(0) );
-            sjf::utilities::vectorResize( m_modulators, NSTAGES, NCHANNELS );
+            sjf::utilities::vectorResize( m_modulators, NSTAGES, NMODCHANNELS );
             Sample stageLen = maxDtSamps / ( std::pow( 2, NSTAGES ) - 1 );
-            auto moffset = 1.0 / static_cast< Sample >( NSTAGES * NCHANNELS );
+            auto moffset = 1.0 / static_cast< Sample >( NSTAGES * NMODCHANNELS );
             vect< size_t > channelShuffle( NCHANNELS );
             for ( auto i = 0; i < NSTAGES; ++i )
             {
                 /* SHUFFLE */
-//                std::iota( channelShuffle.begin(), channelShuffle.end(), 0 );
-//                for ( auto j = 0; j < NSTAGES-1; ++j )
-//                    std::swap( channelShuffle[ j ], channelShuffle[ (static_cast< int >( rArr[ ++randCount ] * ( NSTAGES - j ) ) + j) ] );
-//                rdd.setRotationMatrix( channelShuffle, i );
                 Sample chanLen = stageLen / NCHANNELS;
                 // generate delay times and then shuffle
                 for ( auto j = 0; j < NCHANNELS; ++j )
@@ -83,9 +79,11 @@ namespace earlyDSP
                     rdd.setPolarityFlip( (rArr[ ++randCount ] >= 0.7), i, j );
                     
                     /* VELVET NOISE DELAY TIMES */
-//                    m_DTs[ i ][ j ] = ( rArr[ ++randCount ] * chanLen ) + ( chanLen * j );
                     rdd.setDelayTime( m_DTs[ i ][ j ], i, j );
-                    m_modulators[ i ][ j ].initialise( moffset * (j + i*NCHANNELS), m_DTs[ i ][ j ] );;
+                }
+                for ( auto j = 0; j < NMODCHANNELS; ++j )
+                {
+                    m_modulators[ i ][ j ].initialise( moffset * (j + i*NMODCHANNELS), m_DTs[ i ][ j ] );
                 }
                 stageLen *= 2.0;
             }
@@ -97,8 +95,12 @@ namespace earlyDSP
             {
                 vars.process();
                 for ( auto s = 0; s < NSTAGES; ++s )
-                    for ( auto c= 0; c < NCHANNELS; ++c )
+                {
+                    for ( auto c= 0; c < NMODCHANNELS; ++c )
                         rdd.setDelayTime( m_modulators[s][c].process( m_DTs[s][c], vars.mPhase, vars.mDepth, vars.mDamp ) * vars.size, s, c );
+                    for ( auto c= NMODCHANNELS; c < NCHANNELS; ++c )
+                        rdd.setDelayTime( m_DTs[s][c] * vars.size, s, c );
+                }
                 for( auto c = 0; c < NCHANNELS; ++c )
                     samps[ c ] = buffer.getSample( c, i );
                 rdd.processInPlace( samps );
@@ -108,7 +110,7 @@ namespace earlyDSP
         }
         
     private:
-        const size_t NCHANNELS, NSTAGES;
+        const size_t NCHANNELS, NSTAGES, NMODCHANNELS;
         twoDArray<Sample> m_DTs;
         sjf::rev::rotDelDif< Sample > rdd;
         twoDArray< modulator< Sample > > m_modulators;
@@ -120,7 +122,7 @@ namespace earlyDSP
     template< typename Sample >
     struct mtWrapper
     {
-        mtWrapper( const size_t nChannels, const size_t nTaps, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NTAPS(nTaps), mt( NCHANNELS, NTAPS )
+        mtWrapper( const size_t nChannels, const size_t nTaps, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NTAPS(nTaps), MODMAX( std::sqrt(NTAPS) ), mt( NCHANNELS, NTAPS )
         {
             auto randCount = 0;
             static constexpr Sample MAXDELAYTIMEMS = 250;
@@ -129,7 +131,7 @@ namespace earlyDSP
             sjf::utilities::vectorResize( m_DTs, NCHANNELS, NTAPS, static_cast<Sample>(0) );
             auto vnBand = maxDtSamps / NTAPS;
             sjf::utilities::vectorResize( m_gains, NCHANNELS, NTAPS, static_cast<Sample>(0) );
-            sjf::utilities::vectorResize( m_modulators, NCHANNELS, NTAPS );
+            sjf::utilities::vectorResize( m_modulators, NCHANNELS, MODMAX );
             for ( auto i = 0; i < NCHANNELS; ++i )
             {
                 auto sum = 0.0;
@@ -142,17 +144,16 @@ namespace earlyDSP
                     auto g = static_cast< Sample > ( ( NTAPS + 1 ) - j ) / static_cast< Sample > ( NTAPS + 1 );
                     sum += g;
                     g *= (rArr[ ++randCount ] < 0.666) ? g : -g; // exponential decay
-                    m_gains[ i ][ j ] = g;
-                    
+                    m_gains[ i ][ j ] = g;   
                 }
                 auto invSum { std::sqrt(1.0/sum) };
                 for ( auto j = 0; j < NTAPS; ++j )
                 {
-                    m_gains[ i ][ j ] *= invSum;
-                    m_gains[ i ][ j ] *= 0.5; // stop values going over 1 from modulation!!!
+                    m_gains[ i ][ j ] *= invSum * 0.5;
                     mt[ i ].setGain( m_gains[ i ][ j ], j );
-                    m_modulators[ i ][ j ].initialise( moffset*( NTAPS*i + j ), m_gains[ i ][ j ] );
                 }
+                for ( auto j = 0; j < MODMAX; ++j )
+                    m_modulators[ i ][ j ].initialise( moffset*( NTAPS*i + j ), m_gains[ i ][ j ] );
             }
         }
         void processBlock( juce::AudioBuffer< Sample >& buffer, const size_t blockSize, varHolder<Sample>& vars )
@@ -163,16 +164,15 @@ namespace earlyDSP
                 for ( auto c = 0; c < NCHANNELS; ++c )
                 {
                     for ( auto t = 0; t < NTAPS; ++t )
-                    {
                         mt[ c ].setDelayTimeSamps( m_DTs[ c ][ t ] * vars.size, t );
+                    for ( auto t  = 0; t < MODMAX; ++t )
                         mt[ c ].setGain( m_modulators[ c ][ t ].process( m_gains[c][t], vars.mPhase, vars.mDepth, vars.mDamp ), t );
-                    }
                     buffer.setSample( c, i, mt[ c ].process( buffer.getSample( c, i ) ) );
                 }
             }
         }
     private:
-        const size_t NCHANNELS, NTAPS;
+        const size_t NCHANNELS, NTAPS, MODMAX;
         twoDArray<Sample> m_DTs, m_gains;
         vect< sjf::rev::multiTap< Sample > > mt;
         twoDArray< modulator< Sample > > m_modulators;
@@ -246,7 +246,7 @@ namespace earlyDSP
             auto moffset = 1.0 / static_cast< Sample >( NCHANNELS*NTAPS + NCHANNELS * NSTAGES  );
             sjf::utilities::vectorResize( m_mtDTs, NCHANNELS, NTAPS, static_cast<Sample>(0) );
             sjf::utilities::vectorResize( m_mtGains, NCHANNELS, NTAPS, static_cast<Sample>(0) );
-            sjf::utilities::vectorResize( m_mtModulators, NCHANNELS, NTAPS );
+//            sjf::utilities::vectorResize( m_mtModulators, NCHANNELS, NTAPS );
             auto vnBand = maxDtSampsMT / NTAPS;
             for ( auto i = 0; i < NCHANNELS; ++i )
             {
@@ -268,7 +268,7 @@ namespace earlyDSP
                 {
                     m_mtGains[ i ][ j ] *= invSum * 0.5;
                     mt[ i ].setGain( m_mtGains[ i ][ j ], j );
-                    m_mtModulators[ i ][ j ].initialise( moffset*( NTAPS*i + j ), m_mtGains[ i ][ j ] );
+//                    m_mtModulators[ i ][ j ].initialise( moffset*( NTAPS*i + j ), m_mtGains[ i ][ j ] );
                 }
             }
             
@@ -301,7 +301,7 @@ namespace earlyDSP
                     for ( auto t = 0; t < NTAPS; ++t )
                     {
                         mt[ c ].setDelayTimeSamps( m_mtDTs[ c ][ t ] * vars.size, t );
-                        mt[ c ].setGain( m_mtModulators[ c ][ t ].process( m_mtGains[c][t], vars.mPhase, vars.mDepth, vars.mDamp ), t );
+//                        mt[ c ].setGain( m_mtModulators[ c ][ t ].process( m_mtGains[c][t], vars.mPhase, vars.mDepth, vars.mDamp ), t );
                     }
                     samp = mt[ c ].process( buffer.getSample( c, i ) );
                     
@@ -320,7 +320,7 @@ namespace earlyDSP
         twoDArray<Sample> m_sapDTs, m_mtDTs, m_mtGains;
         vect< sjf::rev::seriesAllpass< Sample > > sap;
         vect< sjf::rev::multiTap< Sample > > mt;
-        twoDArray< modulator< Sample > > m_mtModulators, m_sapModulators;
+        twoDArray< modulator< Sample > > /* m_mtModulators, */ m_sapModulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================

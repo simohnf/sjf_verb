@@ -136,7 +136,7 @@ namespace lateDSP
         {
             vect<Sample> samps ( NCHANNELS, 0 );
             Sample dt = 0;
-            fdn.setMixType( vars.fdnMix );
+//            fdn.setMixType( vars.fdnMix );
             fdn.setControlFB( vars.ControlFB );
             for( auto i = 0; i < blockSize; ++i )
             {
