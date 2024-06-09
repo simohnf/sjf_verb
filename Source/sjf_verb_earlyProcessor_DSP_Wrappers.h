@@ -22,7 +22,9 @@ namespace earlyDSP
     template <typename Sample>
     using phasor = sjf::oscillators::phasor< Sample >;
     template <typename Sample>
-    using modulator = sjf::rev::dtModulatorVoice< Sample >;
+    using modulator = sjf::modulator::modVoice< Sample >;
+//    template <typename Sample>
+//    using modulator = sjf::rev::dtModulatorVoice< Sample >;
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================

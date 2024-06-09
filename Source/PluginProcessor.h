@@ -62,6 +62,8 @@ private:
     
     juce::AudioProcessorValueTreeState valueTreeState;
     
+    
+    sjf::interpolation::interpolatorTypes m_interpolation{ sjf::interpolation::interpolatorTypes::pureData };
     sjf_verb m_rev;
     
     //==============================================================================

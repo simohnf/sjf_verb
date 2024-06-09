@@ -32,7 +32,9 @@ void sjf_verb::initialise( Sample sampleRate, int samplesPerBlock, int numberOfC
     nInternalChannels = std::max( nInternalChannels, m_lateReflections.initialise( m_SR, numberOfChannels ) );
     m_outputProcessor.initialise( m_SR, numberOfChannels );
     m_revBuffer.setSize( static_cast<int>(nInternalChannels), samplesPerBlock );
+    m_revBuffer.clear();
     m_outputBuffer.setSize( static_cast<int>(nInternalChannels), samplesPerBlock );
+    m_outputBuffer.clear();
 }
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
@@ -300,6 +302,7 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
             m_paramHandler.addParameter( vts, p, [ this ]( Sample v ) { m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( v ); } );
             m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( val );
         }
+        
         //==============//==============//==============//==============//==============//==============//==============//==============
         //==============//==============//==============//==============//==============//==============//==============//==============
         //==============//==============//========      OUTPUT PARAMETERS      =========//==============//==============//==============

@@ -184,9 +184,5 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 juce::AudioProcessorValueTreeState::ParameterLayout Sjf_verbAudioProcessor::createParameterLayout()
 {
-//    juce::AudioProcessorValueTreeState::ParameterLayout params;
-//
-//    return params;
-
     return sjf_verb::createParameterLayout();
 }

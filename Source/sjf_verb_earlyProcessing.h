@@ -13,6 +13,7 @@
 #include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_rev.h"
 #include "../sjf_audio/sjf_oscillators.h"
+#include "../sjf_audio/sjf_modulator.h"
 #include "parameterIDs.h"
 #include "sjf_verb_earlyProcessor_DSP_Wrappers.h"
 

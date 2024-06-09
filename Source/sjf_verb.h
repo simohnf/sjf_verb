@@ -44,7 +44,7 @@ private:
     
     sjf_verb_inputProcessor   m_inputProcessor;
     sjf_verb_earlyProcessor   m_earlyReflections;
-    sjf_verb_lateProcessor    m_lateReflections;
+    sjf_verb_lateProcessor< sjf::interpolation::fourPointInterpolatePD<float> >    m_lateReflections;
     sjf_verb_outputProcessor  m_outputProcessor;
     
     juce::AudioBuffer<Sample> m_revBuffer, m_outputBuffer;

@@ -21,7 +21,7 @@ namespace lateDSP
     template <typename Sample>
     using phasor = sjf::oscillators::phasor< Sample >;
     template <typename Sample>
-    using modulator = sjf::rev::dtModulatorVoice< Sample >;
+    using modulator = sjf::modulator::modVoice< Sample >;
     static constexpr size_t PRIME_MAX{10000};
     using primeArray = sjf::utilities::primes<PRIME_MAX>;
 
@@ -50,8 +50,6 @@ namespace lateDSP
                     while ( std::pow(pn, pow) < target )
                         ++pow;
                     pow = (pow == 1) ? 1 : target - std::pow(pn, pow-1) < std::pow(pn, pow) -target ? pow-1 : pow;
-//                    pow = std::max(1, target - std::pow(pn, pow - 1) < std::pow(pn, pow) ? pow-1 : pow);
-//                    pow = pow > 0 ? pow : 1;
                     auto newVal = std::pow(pn, pow);
                     auto newDiff = target > newVal ? target - newVal : newVal - target;
                     if(  newDiff < diff )
@@ -81,6 +79,7 @@ namespace lateDSP
     template<typename Sample>
     struct varHolder
     {
+        varHolder(){ DBG("created late varHolder"); }
         Sample size, diffusion, decay, lpfCO, hpfCO, mDepth, mRate, mDamp, mPhase, sampleRate{44100};
         LSV<Sample> m_sizeSmoother, m_decaySmoother, m_lpfSmoother, m_hpfSmoother, m_diffusionSmoother, m_modDSmoother, m_modRSmoother, m_modDampSmoother;
         sjf::oscillators::phasor< Sample > m_modPhasor{ 1, sampleRate };
@@ -104,7 +103,7 @@ namespace lateDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template<typename Sample, typename MIXER = sjf::mixers::Householder<Sample> >
+    template<typename Sample, typename MIXER = sjf::mixers::Householder<Sample>, typename LIMITER = sjf::rev::fbLimiters::nolimit<Sample>, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD<Sample> >
     struct fdnWrapper
     {
         fdnWrapper( const size_t nChannels, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), fdn(nChannels)
@@ -163,7 +162,7 @@ namespace lateDSP
         
     private:
         const size_t NCHANNELS;
-        sjf::rev::fdn<Sample, MIXER> fdn;
+        sjf::rev::fdn<Sample, MIXER, LIMITER, INTERPOLATION> fdn;
         vect<Sample> m_DTs, m_apDTs;
         vect< modulator<Sample> > m_modulators, m_apModulators;
     };
@@ -171,7 +170,7 @@ namespace lateDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template<typename Sample>
+    template<typename Sample, typename LIMITER = sjf::rev::fbLimiters::nolimit<Sample>, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD<Sample> >
     struct apLoopWrapper
     {
         apLoopWrapper( const size_t nChannels, const size_t nStages, const size_t apPerStage, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), APPERSTAGE(apPerStage), apLoop(nStages, apPerStage)
@@ -186,7 +185,6 @@ namespace lateDSP
             auto moffset = 1.0 / static_cast< Sample >( NSTAGES*( APPERSTAGE+1 ) );
             for ( auto i = 0; i < NSTAGES; ++i )
             {
-//                auto targetTime = ((rArr[ ++randCount ] * 0.6) + 0.4 ) * maxDtSamps;
                 auto targetTime = pdt.closestPower( ((rArr[ ++randCount ] * 0.6) + 0.4 ) * maxDtSamps );
                 m_DTs[ i ][ APPERSTAGE ] = targetTime; // decay time needs to be a little less than sum of preceeding APs
     //            DO MODULATOR
@@ -239,7 +237,7 @@ namespace lateDSP
         
     private:
         const size_t NCHANNELS, NSTAGES, APPERSTAGE;
-        sjf::rev::allpassLoop<Sample> apLoop;
+        sjf::rev::allpassLoop<Sample, LIMITER, INTERPOLATION> apLoop;
         twoDArray<Sample> m_DTs;
         twoDArray< modulator<Sample> > m_modulators;
     };
