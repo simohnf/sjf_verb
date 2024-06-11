@@ -18,8 +18,8 @@
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-
-void sjf_verb::initialise( Sample sampleRate, int samplesPerBlock, int numberOfChannels )
+template< typename INTERPOLATION >
+void sjf_verb<INTERPOLATION>::initialise( Sample sampleRate, int samplesPerBlock, int numberOfChannels )
 {
     m_SR = sampleRate > 0 ? sampleRate : m_SR;
     m_erLevelSmoother.reset( m_SR, 0.05 );
@@ -41,8 +41,8 @@ void sjf_verb::initialise( Sample sampleRate, int samplesPerBlock, int numberOfC
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-
-void sjf_verb::processBlock( juce::AudioBuffer< Sample >& buffer )
+template< typename INTERPOLATION >
+void sjf_verb<INTERPOLATION>::processBlock( juce::AudioBuffer< Sample >& buffer )
 {
     m_paramHandler.triggerCallbacks();
     
@@ -85,8 +85,8 @@ void sjf_verb::processBlock( juce::AudioBuffer< Sample >& buffer )
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-
-void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts,  juce::Array<juce::AudioProcessorParameter*>& params )
+template< typename INTERPOLATION >
+void sjf_verb<INTERPOLATION>::addParametersToHandler( /*juce::AudioProcessorValueTreeState &vts,*/ const juce::Array<juce::AudioProcessorParameter*>& params )
 {
     for ( auto& p : params )
     {
@@ -101,7 +101,7 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         //==============//==============//==============//==============//==============//==============//==============//==============
         if ( id == parameterIDs::mix )
         {
-            m_paramHandler.addParameter(vts,
+            m_paramHandler.addParameter(/*vts,*/
                                         p,
                                         [this](Sample v)
                                         {
@@ -121,14 +121,14 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         }
         else if ( id == parameterIDs::earlyReflectionLevel )
         {
-            m_paramHandler.addParameter(vts,
+            m_paramHandler.addParameter(/*vts,*/
                                         p,
                                         [this](Sample v) { m_erLevelSmoother.setTargetValue( (v>0?std::sqrt(v*0.01):0) ); });
             m_erLevelSmoother.setCurrentAndTargetValue( (val>0?std::sqrt(val*0.01):0) );
         }
         else if( id == parameterIDs::lateReflectionLevel )
         {
-            m_paramHandler.addParameter(vts,
+            m_paramHandler.addParameter(/*vts,*/
                                         p,
                                         [this](Sample v) { m_lrLevelSmoother.setTargetValue( (v>0?std::sqrt(v*0.01):0) ); });
             m_lrLevelSmoother.setCurrentAndTargetValue( (val>0?std::sqrt(val*0.01):0) );
@@ -140,26 +140,26 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         //==============//==============//==============//==============//==============//==============//==============//==============
         else if( id == parameterIDs::inputHPFCutoff )
         {
-            m_paramHandler.addParameter( vts,
+            m_paramHandler.addParameter(/*vts,*/
                                          p,
                                         [this](Sample v){m_inputProcessor.m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
             m_inputProcessor.m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
         }
         else if( id == parameterIDs::inputLPFCutoff )
         {
-            m_paramHandler.addParameter(vts,
+            m_paramHandler.addParameter(/*vts,*/
                                         p,
                                         [this](Sample v){m_inputProcessor.m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
             m_inputProcessor.m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
         }
         else if( id == parameterIDs::preDelay )
         {
-            m_paramHandler.addParameter(vts, p, [this]( Sample v ) { m_inputProcessor.m_preDelaySmoother.setTargetValue( v * 0.001 * m_SR ); });
+            m_paramHandler.addParameter(/*vts,*/ p, [this]( Sample v ) { m_inputProcessor.m_preDelaySmoother.setTargetValue( v * 0.001 * m_SR ); });
             m_inputProcessor.m_preDelaySmoother.setCurrentAndTargetValue( val * 0.001 * m_SR );
         }
         else if ( id == parameterIDs::reverse )
         {
-            m_paramHandler.addParameter( vts, p, [this]( Sample v ) { m_inputProcessor.setReversed( static_cast< bool >( v ) ); } );
+            m_paramHandler.addParameter(/*vts,*/ p, [this]( Sample v ) { m_inputProcessor.setReversed( static_cast< bool >( v ) ); } );
             m_inputProcessor.setReversed( static_cast< bool >( val ) );
         }
         //==============//==============//==============//==============//==============//==============//==============//==============
@@ -169,7 +169,7 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         //==============//==============//==============//==============//==============//==============//==============//==============
         else if ( id == parameterIDs::size )
         {
-            m_paramHandler.addParameter(vts, p, [this](Sample v)
+            m_paramHandler.addParameter(/*vts,*/ p, [this](Sample v)
                                         {
                 v *= 0.01;
                 v =  (v <= 0.5) ? std::pow( 2.0, -( 0.5 - v )*3.0 ) : std::pow( 2.0, v - 0.5 );
@@ -183,7 +183,7 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         }
         else if ( id == parameterIDs::modDepth )
         {
-            m_paramHandler.addParameter(vts, p, [this](Sample v)
+            m_paramHandler.addParameter(/*vts,*/ p, [this](Sample v)
                                         {
                 auto depth = std::pow( v * 0.008, 2 );
                 m_earlyReflections.m_varHolder.m_modDSmoother.setTargetValue( depth );
@@ -195,7 +195,7 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         }
         else if ( id == parameterIDs::modRate )
         {
-            m_paramHandler.addParameter(vts, p, [this](Sample v)
+            m_paramHandler.addParameter(/*vts,*/ p, [this](Sample v)
                                         {
                 auto coef =  1.0 - calculateLPFCoefficient( v, m_SR );
                 m_earlyReflections.m_varHolder.m_modRSmoother.setTargetValue( v );
@@ -217,7 +217,7 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         //==============//==============//==============//==============//==============//==============//==============//==============
         else if ( id == parameterIDs::earlyReflectionType )
         {
-            m_paramHandler.addParameter( vts, p, [this](Sample v)
+            m_paramHandler.addParameter(/*vts,*/ p, [this](Sample v)
                                         {
                 jassert( parameterIDs::earlyTypeMap.find( v ) != parameterIDs::earlyTypeMap.end() );
                 m_earlyReflections.setEarlyType( parameterIDs::earlyTypeMap.find( v )->second );
@@ -228,19 +228,19 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         
         else if ( id == parameterIDs::earlyDiffusion )
         {
-            m_paramHandler.addParameter(vts, p, [this]( Sample v ){ m_earlyReflections.m_varHolder.m_diffusionSmoother.setTargetValue( ( v * 0.006 ) + 0.2 ); });
+            m_paramHandler.addParameter(/*vts,*/ p, [this]( Sample v ){ m_earlyReflections.m_varHolder.m_diffusionSmoother.setTargetValue( ( v * 0.006 ) + 0.2 ); });
             m_earlyReflections.m_varHolder.m_diffusionSmoother.setCurrentAndTargetValue( ( val * 0.006 ) + 0.2 );
         }
         else if ( id == parameterIDs::earlyHPFCutoff )
         {
-            m_paramHandler.addParameter( vts,
+            m_paramHandler.addParameter(/*vts,*/
                                          p,
                                         [this](Sample v){m_earlyReflections.m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
             m_earlyReflections.m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
         }
         else if ( id == parameterIDs::earlyLPFCutoff )
         {
-            m_paramHandler.addParameter( vts,
+            m_paramHandler.addParameter(/*vts,*/
                                          p,
                                         [this](Sample v){m_earlyReflections.m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
             m_earlyReflections.m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
@@ -253,7 +253,7 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         //==============//==============//==============//==============//==============//==============//==============//==============
         else if ( id == parameterIDs::lateReflectionType )
         {
-            m_paramHandler.addParameter( vts, p, [ this ]( Sample v )
+            m_paramHandler.addParameter(/*vts,*/ p, [ this ]( Sample v )
                                         {
                 jassert( parameterIDs::lateTypeMap.find( v ) != parameterIDs::lateTypeMap.end() );
                 m_lateReflections.setLateType( parameterIDs::lateTypeMap.find( v )->second );
@@ -263,44 +263,50 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         }
         else if ( id == parameterIDs::lateDiffusion )
         {
-            m_paramHandler.addParameter(vts, p, [this]( Sample v ) {
+            m_paramHandler.addParameter(/*vts,*/ p, [this]( Sample v ) {
                 m_lateReflections.m_varHolder.m_diffusionSmoother.setTargetValue( ( v * 0.006 ) + 0.2 ); } );
             m_lateReflections.m_varHolder.m_diffusionSmoother.setCurrentAndTargetValue( ( val * 0.006 ) + 0.2 );
         }
         else if( id == parameterIDs::lateHPFCutoff )
         {
-            m_paramHandler.addParameter( vts,
+            m_paramHandler.addParameter(/*vts,*/
                                          p,
                                         [this](Sample v) {m_lateReflections.m_varHolder.m_hpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
             m_lateReflections.m_varHolder.m_hpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
         }
         else if( id == parameterIDs::lateLPFCutoff )
         {
-            m_paramHandler.addParameter( vts,
+            m_paramHandler.addParameter(/*vts,*/
                                          p,
                                         [this](Sample v) {m_lateReflections.m_varHolder.m_lpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
             m_lateReflections.m_varHolder.m_lpfSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
         }
         else if ( id == parameterIDs::decay )
         {
-            m_paramHandler.addParameter(vts, p, [this](Sample v) { m_lateReflections.m_varHolder.m_decaySmoother.setTargetValue( v * 1000.0 ); });
+            m_paramHandler.addParameter(/*vts,*/ p, [this](Sample v) { m_lateReflections.m_varHolder.m_decaySmoother.setTargetValue( v * 1000.0 ); });
             m_lateReflections.m_varHolder.m_decaySmoother.setCurrentAndTargetValue( val * 1000.0 );
         }
         else if ( id == parameterIDs::fdnMixType )
         {
-            m_paramHandler.addParameter(vts,
+            m_paramHandler.addParameter(/*vts,*/
                                         p,
                                         [this](Sample v)
                                         {
                 jassert( parameterIDs::fdnMixMap.find( v ) != parameterIDs::fdnMixMap.end() );
-                m_lateReflections.m_varHolder.fdnMix = parameterIDs::fdnMixMap.find(v)->second;
+                m_lateReflections.setMixType(parameterIDs::fdnMixMap.find(v)->second);
+//                m_lateReflections.m_varHolder.fdnMix = parameterIDs::fdnMixMap.find(v)->second;
             } );
-            m_lateReflections.m_varHolder.fdnMix = parameterIDs::fdnMixMap.find( static_cast<int>( val ) )->second;
+            m_lateReflections.setMixType(parameterIDs::fdnMixMap.find(val)->second);
+//            m_lateReflections.m_varHolder.fdnMix = parameterIDs::fdnMixMap.find( static_cast<int>( val ) )->second;
         }
         else if ( id == parameterIDs::feedbackLimit )
         {
-            m_paramHandler.addParameter( vts, p, [ this ]( Sample v ) { m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( v ); } );
-            m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( val );
+            m_paramHandler.addParameter(/*vts,*/ p, [ this ]( Sample v ) {
+                m_lateReflections.setFBLimit( static_cast< bool >( v ) );
+//                m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( v );
+            } );
+            m_lateReflections.setFBLimit( static_cast< bool >( val ) );
+//            m_lateReflections.m_varHolder.ControlFB =  static_cast< bool >( val );
         }
         
         //==============//==============//==============//==============//==============//==============//==============//==============
@@ -310,19 +316,19 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
         //==============//==============//==============//==============//==============//==============//==============//==============
         else if ( id == parameterIDs::monoLow )
         {
-            m_paramHandler.addParameter( vts, p, [ this ]( Sample v ) { m_outputProcessor.setMonoLow( static_cast< bool >( v ) ); } );
+            m_paramHandler.addParameter(/*vts,*/ p, [ this ]( Sample v ) { m_outputProcessor.setMonoLow( static_cast< bool >( v ) ); } );
             m_outputProcessor.setMonoLow( static_cast< bool >( val ) );
         }
         
         else if( id == parameterIDs::shimmerLevel )
         {
-            m_paramHandler.addParameter( vts, p, [this]( Sample v ) { m_outputProcessor.m_shimLevelSmoother.setTargetValue( std::pow( v*0.003, 2 ) ); } );
+            m_paramHandler.addParameter(/*vts,*/ p, [this]( Sample v ) { m_outputProcessor.m_shimLevelSmoother.setTargetValue( std::pow( v*0.003, 2 ) ); } );
             m_outputProcessor.m_shimLevelSmoother.setCurrentAndTargetValue( std::pow( val*0.003, 2 ) );
         }
         
         else if( id == parameterIDs::shimmerTransposition )
         {
-            m_paramHandler.addParameter( vts, p, [this]( Sample v ) {
+            m_paramHandler.addParameter(/*vts,*/ p, [this]( Sample v ) {
                 m_outputProcessor.m_shimShiftSmoother[0].setTargetValue( std::pow( 2.0, v/12.0 ) );
                 m_outputProcessor.m_shimShiftSmoother[1].setTargetValue( std::pow( 2.0, -v/12.0 ) );
             } );
@@ -336,8 +342,8 @@ void sjf_verb::addParametersToHandler( juce::AudioProcessorValueTreeState &vts, 
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-
-juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb::createParameterLayout( )
+template< typename INTERPOLATION >
+juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb<INTERPOLATION>::createParameterLayout( )
 {
     juce::AudioProcessorValueTreeState::ParameterLayout params;
     
@@ -409,3 +415,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb::createParameterLay
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
+template class sjf_verb<sjf::interpolation::noneInterpolate<float> >;
+template class sjf_verb<sjf::interpolation::linearInterpolate<float> >;
+template class sjf_verb<sjf::interpolation::cubicInterpolate<float> >;
+template class sjf_verb<sjf::interpolation::fourPointInterpolatePD<float> >;
+template class sjf_verb<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
+template class sjf_verb<sjf::interpolation::cubicInterpolateGodot<float> >;
+template class sjf_verb<sjf::interpolation::cubicInterpolateHermite<float> >;

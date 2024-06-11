@@ -20,17 +20,18 @@
 #include "sjf_verb_lateProcessing.h"
 #include "sjf_verb_outputProcessing.h"
 
+template< typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< float > >
 class sjf_verb
 {
     using Sample = float;
 public:
     
-    sjf_verb() {}
+    sjf_verb( juce::AudioProcessorValueTreeState &vts ) : m_paramHandler( vts ) {}
     ~sjf_verb(){}
     
     void processBlock( juce::AudioBuffer<Sample>& buffer );
     
-    void addParametersToHandler( juce::AudioProcessorValueTreeState &vts, juce::Array<juce::AudioProcessorParameter*>& params  );
+    void addParametersToHandler( /*juce::AudioProcessorValueTreeState &vts,*/ const juce::Array<juce::AudioProcessorParameter*>& params  );
     
     void initialise( Sample sampleRate, int samplesPerBlock, int numberOfChannels );
     
@@ -42,10 +43,11 @@ private:
     
     Sample m_SR{44100.0};
     
-    sjf_verb_inputProcessor   m_inputProcessor;
-    sjf_verb_earlyProcessor   m_earlyReflections;
-    sjf_verb_lateProcessor< sjf::interpolation::fourPointInterpolatePD<float> >    m_lateReflections;
-    sjf_verb_outputProcessor  m_outputProcessor;
+    
+    sjf_verb_inputProcessor<INTERPOLATION>   m_inputProcessor;
+    sjf_verb_earlyProcessor<INTERPOLATION>   m_earlyReflections;
+    sjf_verb_lateProcessor<INTERPOLATION>    m_lateReflections;
+    sjf_verb_outputProcessor<INTERPOLATION>  m_outputProcessor;
     
     juce::AudioBuffer<Sample> m_revBuffer, m_outputBuffer;
 };

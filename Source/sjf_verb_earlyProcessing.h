@@ -17,7 +17,7 @@
 #include "parameterIDs.h"
 #include "sjf_verb_earlyProcessor_DSP_Wrappers.h"
 
-
+template< typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< float > >
 class sjf_verb_earlyProcessor
 {
     using Sample = float;
@@ -45,10 +45,10 @@ private:
     
     Sample m_SR{44100};
 
-    std::unique_ptr< earlyDSP::rddWrapper<Sample> >         m_rdd;
-    std::unique_ptr< earlyDSP::sapWrapper<Sample> >         m_sap;
-    std::unique_ptr< earlyDSP::mtWrapper<Sample> >          m_mt;
-    std::unique_ptr< earlyDSP::mtsapWrapper<Sample> >       m_mtSap;
+    std::unique_ptr< earlyDSP::rddWrapper<Sample, INTERPOLATION> >         m_rdd;
+    std::unique_ptr< earlyDSP::sapWrapper<Sample, INTERPOLATION> >         m_sap;
+    std::unique_ptr< earlyDSP::mtWrapper<Sample, INTERPOLATION> >          m_mt;
+    std::unique_ptr< earlyDSP::mtsapWrapper<Sample, INTERPOLATION> >       m_mtSap;
 
     std::vector< sjf::filters::damper< Sample > >                                               m_earlyLPF, m_earlyHPF;
 

@@ -14,6 +14,7 @@
 #include "../sjf_audio/sjf_rev.h"
 #include "parameterIDs.h"
 
+template< typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< float > >
 class sjf_verb_inputProcessor
 {
     using Sample = float;
@@ -34,7 +35,7 @@ private:
     Sample m_SR {44100};
     
     
-    std::vector< sjf::delayLine::reverseDelay< Sample > > m_preDelays;
+    std::vector< sjf::delayLine::reverseDelay< Sample, INTERPOLATION > > m_preDelays;
     std::vector< sjf::filters::damper< Sample > > m_inputLPF, m_inputHPF;
     
     size_t NCHANNELS{2};

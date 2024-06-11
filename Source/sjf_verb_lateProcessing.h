@@ -35,9 +35,9 @@ public:
     
     void setLateType( parameterIDs::lateTypesEnum type );
     
-//    void setMixType( sjf::rev::mixers mixType );
-//    
-//    void setFBLimit( bool shouldLimitFeedback );
+    void setMixType( sjf::rev::mixers mixType );
+    
+    void setFBLimit( bool shouldLimitFeedback );
     
     lateDSP::varHolder<Sample> m_varHolder;
     
@@ -50,7 +50,7 @@ private:
     size_t fdn_NCHANNELS{8};
     static constexpr randArray m_randArray; // random values for delayTimes
     bool m_fbLimit{false};
-    
+    bool m_stateChanged{false};
     using noLimit = sjf::rev::fbLimiters::nolimit<Sample>;
     using limit = sjf::rev::fbLimiters::limit<Sample>;
     

@@ -40,22 +40,14 @@ size_t sjf_verb_lateProcessor<INTERPOLATION>::initialise( Sample sampleRate, int
 template< typename INTERPOLATION >
 void sjf_verb_lateProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
 {
+    if( m_stateChanged )
+        setLateType(m_lateType);
+    m_stateChanged = false;
     switch (m_lateType) {
         case parameterIDs::lateTypesEnum::fdn:
-            if( m_varHolder.fdnMix != m_fdnMixer || m_varHolder.ControlFB != m_fbLimit )
-            {
-                m_fdnMixer = m_varHolder.fdnMix;
-                m_fbLimit = m_varHolder.ControlFB;
-                setLateType(m_lateType);
-            }
             std::visit( fdnVisitor{ buffer,blockSize,m_varHolder}, m_fdn );
             break;
         case parameterIDs::lateTypesEnum::apLoop:
-            if( m_varHolder.ControlFB != m_fbLimit )
-            {
-                m_fbLimit = m_varHolder.ControlFB;
-                setLateType(m_lateType);
-            }
             std::visit( apLoopVisitor{ buffer,blockSize,m_varHolder}, m_apLoop );
             break;
         default:
@@ -77,7 +69,6 @@ void sjf_verb_lateProcessor<INTERPOLATION>::setLateType( parameterIDs::lateTypes
     
     switch (m_lateType) {
         case parameterIDs::lateTypesEnum::fdn:
-//            m_apLoop.reset();
             std::visit( apLoopReseter(), m_apLoop );
             if( m_fbLimit )
                 switch (m_fdnMixer) {
@@ -109,7 +100,6 @@ void sjf_verb_lateProcessor<INTERPOLATION>::setLateType( parameterIDs::lateTypes
                 }
             break;
         case parameterIDs::lateTypesEnum::apLoop:
-//            m_apLoop = std::make_unique<lateDSP::apLoopWrapper<Sample> >(NCHANNELS, apl_NSTAGES, apl_NAP_PERSTAGE, m_randArray, m_SR);
             if( m_fbLimit )
                 m_apLoop = std::make_unique< apLoopWrapFB >(NCHANNELS, apl_NSTAGES, apl_NAP_PERSTAGE, m_randArray, m_SR);
             else
@@ -127,22 +117,24 @@ void sjf_verb_lateProcessor<INTERPOLATION>::setLateType( parameterIDs::lateTypes
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-//template< typename INTERPOLATION >
-//void sjf_verb_lateProcessor<INTERPOLATION>::setMixType( sjf::rev::mixers mixType )
-//{
-//    m_fdnMixer = mixType;
-//}
+template< typename INTERPOLATION >
+void sjf_verb_lateProcessor<INTERPOLATION>::setMixType( sjf::rev::mixers mixType )
+{
+    m_fdnMixer = mixType;
+    m_stateChanged = true;
+}
 
 
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-//template< typename INTERPOLATION >
-//void sjf_verb_lateProcessor<INTERPOLATION>::setFBLimit( bool shouldLimitFeedback )
-//{
-//    m_fbLimit = shouldLimitFeedback;
-//}
+template< typename INTERPOLATION >
+void sjf_verb_lateProcessor<INTERPOLATION>::setFBLimit( bool shouldLimitFeedback )
+{
+    m_fbLimit = shouldLimitFeedback;
+    m_stateChanged = true;
+}
 
 
 //=============================//=============================//=============================//=============================

@@ -11,8 +11,8 @@
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-
-size_t sjf_verb_earlyProcessor::initialise( Sample sampleRate, int numberOfChannels )
+template< typename INTERPOLATION >
+size_t sjf_verb_earlyProcessor<INTERPOLATION>::initialise( Sample sampleRate, int numberOfChannels )
 {
     m_SR = sampleRate;
     NCHANNELS = numberOfChannels;
@@ -36,8 +36,8 @@ size_t sjf_verb_earlyProcessor::initialise( Sample sampleRate, int numberOfChann
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-
-void sjf_verb_earlyProcessor::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
+template< typename INTERPOLATION >
+void sjf_verb_earlyProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
 {
     switch ( m_earlyType ) {
         case parameterIDs::earlyTypesEnum::multitap:
@@ -64,8 +64,8 @@ void sjf_verb_earlyProcessor::processBlock( juce::AudioBuffer< Sample >& buffer,
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-
-void sjf_verb_earlyProcessor::filterBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
+template< typename INTERPOLATION >
+void sjf_verb_earlyProcessor<INTERPOLATION>::filterBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
 {
     jassert( buffer.getNumChannels() == rdd_NCHANNELS );
     Sample samp = 0, lpfCO = 0, hpfCO = 0;
@@ -92,33 +92,45 @@ void sjf_verb_earlyProcessor::filterBlock( juce::AudioBuffer< Sample >& buffer, 
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-
-void sjf_verb_earlyProcessor::setEarlyType( parameterIDs::earlyTypesEnum type  )
+template< typename INTERPOLATION >
+void sjf_verb_earlyProcessor<INTERPOLATION>::setEarlyType( parameterIDs::earlyTypesEnum type  )
 {
     m_earlyType = type;
     switch ( m_earlyType ) {
         case parameterIDs::earlyTypesEnum::rotDelDif :
-            m_rdd = std::make_unique< earlyDSP::rddWrapper<Sample> >( rdd_NCHANNELS, rdd_NSTAGES, m_randArray, m_SR );
+            m_rdd = std::make_unique< earlyDSP::rddWrapper<Sample, INTERPOLATION> >( rdd_NCHANNELS, rdd_NSTAGES, m_randArray, m_SR );
             m_mt.reset();
             m_sap.reset();
             break;
         case parameterIDs::earlyTypesEnum::multitap :
             m_rdd.reset();
-            m_mt = std::make_unique< earlyDSP::mtWrapper<Sample> >( NCHANNELS, mt_NTAPS, m_randArray, m_SR );
+            m_mt = std::make_unique< earlyDSP::mtWrapper<Sample, INTERPOLATION> >( NCHANNELS, mt_NTAPS, m_randArray, m_SR );
             m_sap.reset();
             break;
         case parameterIDs::earlyTypesEnum::seriesAP  :
             m_rdd.reset();
             m_mt.reset();
-            m_sap = std::make_unique< earlyDSP::sapWrapper<Sample> >( NCHANNELS, sap_NSTAGES, m_randArray, m_SR );
+            m_sap = std::make_unique< earlyDSP::sapWrapper<Sample, INTERPOLATION> >( NCHANNELS, sap_NSTAGES, m_randArray, m_SR );
             break;
         case parameterIDs::earlyTypesEnum::mt_sAP :
             m_rdd.reset();
             m_mt.reset();
             m_sap.reset();
-            m_mtSap = std::make_unique< earlyDSP::mtsapWrapper<Sample>>(NCHANNELS, sap_NSTAGES, mt_NTAPS, m_randArray, m_SR );
+            m_mtSap = std::make_unique< earlyDSP::mtsapWrapper<Sample, INTERPOLATION>>(NCHANNELS, sap_NSTAGES, mt_NTAPS, m_randArray, m_SR );
             break;
         default:
             break;
     }
 }
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+
+template class sjf_verb_earlyProcessor<sjf::interpolation::noneInterpolate<float> >;
+template class sjf_verb_earlyProcessor<sjf::interpolation::linearInterpolate<float> >;
+template class sjf_verb_earlyProcessor<sjf::interpolation::cubicInterpolate<float> >;
+template class sjf_verb_earlyProcessor<sjf::interpolation::fourPointInterpolatePD<float> >;
+template class sjf_verb_earlyProcessor<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
+template class sjf_verb_earlyProcessor<sjf::interpolation::cubicInterpolateGodot<float> >;
+template class sjf_verb_earlyProcessor<sjf::interpolation::cubicInterpolateHermite<float> >;

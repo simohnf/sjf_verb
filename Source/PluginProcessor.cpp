@@ -22,9 +22,24 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
                        )
 #endif
 , valueTreeState( *this, nullptr, juce::Identifier("sjf_verb"), createParameterLayout() )
+, m_paramHandler(valueTreeState)
+, m_verb( valueTreeState )
 {
-    auto params = getParameters();
-    m_rev.addParametersToHandler( valueTreeState, params );
+    
+    auto interpParam = valueTreeState.getParameter( parameterIDs::mainName + parameterIDs::interpolationType );
+    auto val = sjf::juceStuff::getUnNormalisedParameterValue< float >( interpParam );
+    m_paramHandler.addParameter(interpParam,
+                                [this]( int v)
+                                {
+        jassert( parameterIDs::interpMap.find( v ) != parameterIDs::interpMap.end() );
+        m_verb.setInterpolationType(parameterIDs::interpMap.find( v )->second, valueTreeState, getParameters() );
+                                });
+    jassert( parameterIDs::interpMap.find( val ) != parameterIDs::interpMap.end() );
+
+    m_verb.setInterpolationType( sjf::interpolation::interpolatorTypes::pureData, valueTreeState, getParameters() );
+    m_verb.initialise( getSampleRate(), getBlockSize(), std::max( getTotalNumInputChannels(), getTotalNumOutputChannels() ) );
+    
+    
 }
 
 Sjf_verbAudioProcessor::~Sjf_verbAudioProcessor()
@@ -95,7 +110,7 @@ void Sjf_verbAudioProcessor::changeProgramName (int index, const juce::String& n
 //==============================================================================
 void Sjf_verbAudioProcessor::prepareToPlay (double sampleRate, int samplesPerBlock)
 {
-    m_rev.initialise( sampleRate, samplesPerBlock, std::max( getTotalNumInputChannels(), getTotalNumOutputChannels() ) );
+    m_verb.initialise( sampleRate, samplesPerBlock, std::max( getTotalNumInputChannels(), getTotalNumOutputChannels() ) );
 }
 
 void Sjf_verbAudioProcessor::releaseResources()
@@ -132,6 +147,7 @@ bool Sjf_verbAudioProcessor::isBusesLayoutSupported (const BusesLayout& layouts)
 
 void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    m_paramHandler.triggerCallbacks();
     juce::ScopedNoDenormals noDenormals;
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
@@ -139,7 +155,7 @@ void Sjf_verbAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juc
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
     
-    m_rev.processBlock( buffer );
+    m_verb.processBlock( buffer );
 }
 
 //==============================================================================
@@ -184,5 +200,5 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 
 juce::AudioProcessorValueTreeState::ParameterLayout Sjf_verbAudioProcessor::createParameterLayout()
 {
-    return sjf_verb::createParameterLayout();
+    return sjf_verb<>::createParameterLayout();
 }

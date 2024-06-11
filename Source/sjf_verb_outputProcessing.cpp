@@ -8,8 +8,8 @@
 
 #include "sjf_verb_outputProcessing.h"
 
-
-void sjf_verb_outputProcessor::initialise( Sample sampleRate, int nChannels )
+template< typename INTERPOLATION >
+void sjf_verb_outputProcessor<INTERPOLATION>::initialise( Sample sampleRate, int nChannels )
 {
     NCHANNELS = nChannels;
     if ( NCHANNELS != 2)
@@ -31,8 +31,8 @@ void sjf_verb_outputProcessor::initialise( Sample sampleRate, int nChannels )
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-
-void sjf_verb_outputProcessor::processBlock( juce::AudioBuffer<Sample> &outputBuffer, juce::AudioBuffer<Sample> &revBuffer, size_t blockSize)
+template< typename INTERPOLATION >
+void sjf_verb_outputProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer<Sample> &outputBuffer, juce::AudioBuffer<Sample> &revBuffer, size_t blockSize)
 {
     
     if( m_shimLevelSmoother.getTargetValue() == 0. && m_shimLevelSmoother.getCurrentValue() == 0. )
@@ -95,13 +95,20 @@ void sjf_verb_outputProcessor::processBlock( juce::AudioBuffer<Sample> &outputBu
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-
-void sjf_verb_outputProcessor::setMonoLow( bool monoLow )
+template< typename INTERPOLATION >
+void sjf_verb_outputProcessor<INTERPOLATION>::setMonoLow( bool monoLow )
 {
     m_monoLow = monoLow;
 }
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
-//=======================================//=======================================//=======================================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
 
+template class sjf_verb_outputProcessor<sjf::interpolation::noneInterpolate<float> >;
+template class sjf_verb_outputProcessor<sjf::interpolation::linearInterpolate<float> >;
+template class sjf_verb_outputProcessor<sjf::interpolation::cubicInterpolate<float> >;
+template class sjf_verb_outputProcessor<sjf::interpolation::fourPointInterpolatePD<float> >;
+template class sjf_verb_outputProcessor<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
+template class sjf_verb_outputProcessor<sjf::interpolation::cubicInterpolateGodot<float> >;
+template class sjf_verb_outputProcessor<sjf::interpolation::cubicInterpolateHermite<float> >;

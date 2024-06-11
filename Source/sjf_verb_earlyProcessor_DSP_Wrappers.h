@@ -51,7 +51,7 @@ namespace earlyDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample >
+    template< typename Sample, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< Sample > >
     struct rddWrapper
     {
         rddWrapper( const size_t nChannels, const size_t nStages, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), NMODCHANNELS(std::sqrt(NCHANNELS)), rdd(NCHANNELS,NSTAGES,NMODCHANNELS)
@@ -121,7 +121,7 @@ namespace earlyDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample >
+    template< typename Sample, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< Sample > >
     struct mtWrapper
     {
         mtWrapper( const size_t nChannels, const size_t nTaps, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NTAPS(nTaps), MODMAX( std::sqrt(NTAPS) ), mt( NCHANNELS, NTAPS )
@@ -183,7 +183,7 @@ namespace earlyDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample >
+    template< typename Sample, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< Sample > >
     struct sapWrapper
     {
         sapWrapper( const size_t nChannels, const size_t nStages, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), sap( NCHANNELS, NSTAGES )
@@ -235,7 +235,7 @@ namespace earlyDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample >
+    template< typename Sample, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< Sample > >
     struct mtsapWrapper
     {
         mtsapWrapper( const size_t nChannels, const size_t nSAPStages, const size_t nTaps, const randArray<Sample>& rArr, const Sample sampleRate ) :

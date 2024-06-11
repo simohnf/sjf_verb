@@ -12,8 +12,8 @@
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-
-void sjf_verb_inputProcessor::initialise( Sample sampleRate, int numberOfChannels )
+template< typename INTERPOLATION >
+void sjf_verb_inputProcessor<INTERPOLATION>::initialise( Sample sampleRate, int numberOfChannels )
 {
     m_SR = sampleRate;
     NCHANNELS = numberOfChannels;
@@ -36,8 +36,8 @@ void sjf_verb_inputProcessor::initialise( Sample sampleRate, int numberOfChannel
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-
-void sjf_verb_inputProcessor::processBlock( juce::AudioBuffer<Sample> &revBuffer, size_t blockSize )
+template< typename INTERPOLATION >
+void sjf_verb_inputProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer<Sample> &revBuffer, size_t blockSize )
 {
     Sample samp = 0.0, pdDT = 0, lpfCO = 0, hpfCO= 0;
     if ( m_reversed )
@@ -86,8 +86,8 @@ void sjf_verb_inputProcessor::processBlock( juce::AudioBuffer<Sample> &revBuffer
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 
-
-void sjf_verb_inputProcessor::setReversed( bool shouldReverse)
+template< typename INTERPOLATION >
+void sjf_verb_inputProcessor<INTERPOLATION>::setReversed( bool shouldReverse)
 {
     m_reversed = shouldReverse;
 }
@@ -95,3 +95,11 @@ void sjf_verb_inputProcessor::setReversed( bool shouldReverse)
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
+
+template class sjf_verb_inputProcessor<sjf::interpolation::noneInterpolate<float> >;
+template class sjf_verb_inputProcessor<sjf::interpolation::linearInterpolate<float> >;
+template class sjf_verb_inputProcessor<sjf::interpolation::cubicInterpolate<float> >;
+template class sjf_verb_inputProcessor<sjf::interpolation::fourPointInterpolatePD<float> >;
+template class sjf_verb_inputProcessor<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
+template class sjf_verb_inputProcessor<sjf::interpolation::cubicInterpolateGodot<float> >;
+template class sjf_verb_inputProcessor<sjf::interpolation::cubicInterpolateHermite<float> >;

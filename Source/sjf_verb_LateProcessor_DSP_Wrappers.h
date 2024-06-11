@@ -83,8 +83,8 @@ namespace lateDSP
         Sample size, diffusion, decay, lpfCO, hpfCO, mDepth, mRate, mDamp, mPhase, sampleRate{44100};
         LSV<Sample> m_sizeSmoother, m_decaySmoother, m_lpfSmoother, m_hpfSmoother, m_diffusionSmoother, m_modDSmoother, m_modRSmoother, m_modDampSmoother;
         sjf::oscillators::phasor< Sample > m_modPhasor{ 1, sampleRate };
-        sjf::rev::mixers fdnMix{ sjf::rev::mixers::hadamard };
-        bool ControlFB{false};
+//        sjf::rev::mixers fdnMix{ sjf::rev::mixers::hadamard };
+//        bool ControlFB{false};
         void process()
         {
             size = m_sizeSmoother.getNextValue();
@@ -136,7 +136,7 @@ namespace lateDSP
             vect<Sample> samps ( NCHANNELS, 0 );
             Sample dt = 0;
 //            fdn.setMixType( vars.fdnMix );
-            fdn.setControlFB( vars.ControlFB );
+//            fdn.setControlFB( vars.ControlFB );
             for( auto i = 0; i < blockSize; ++i )
             {
                 for ( auto c = 0; c < NCHANNELS; ++c )
@@ -210,7 +210,7 @@ namespace lateDSP
         {
             Sample dt = 0;
             vect< Sample > samps( NCHANNELS, 0 );
-            apLoop.setControlFB( vars.ControlFB );
+//            apLoop.setControlFB( vars.ControlFB );
             for ( auto i = 0; i < blockSize; ++i )
             {
                 for ( auto c = 0; c < NCHANNELS; ++c )
