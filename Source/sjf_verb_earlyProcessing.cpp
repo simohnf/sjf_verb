@@ -39,6 +39,8 @@ size_t sjf_verb_earlyProcessor<INTERPOLATION>::initialise( Sample sampleRate, in
 template< typename INTERPOLATION >
 void sjf_verb_earlyProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
 {
+    m_paramHandler.triggerCallbacks();
+    
     switch ( m_earlyType ) {
         case parameterIDs::earlyTypesEnum::multitap:
             m_mt->processBlock( buffer, blockSize, m_varHolder );
@@ -122,6 +124,75 @@ void sjf_verb_earlyProcessor<INTERPOLATION>::setEarlyType( parameterIDs::earlyTy
             break;
     }
 }
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+template< typename INTERPOLATION >
+void sjf_verb_earlyProcessor<INTERPOLATION>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
+{
+    auto p = vts.getParameter( parameterIDs::mainName + parameterIDs::earlyReflectionType );
+    auto val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [this](Sample v)
+                                {
+                                    jassert( parameterIDs::earlyTypeMap.find( v ) != parameterIDs::earlyTypeMap.end() );
+                                    setEarlyType( parameterIDs::earlyTypeMap.find( v )->second );
+                                } );
+    jassert( parameterIDs::earlyTypeMap.find( val ) != parameterIDs::earlyTypeMap.end() );
+    setEarlyType( parameterIDs::earlyTypeMap.find( static_cast<int>( val ) )->second );
+
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::earlyDiffusion );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [this]( Sample v ){ m_varHolder.m_diffusionSmoother.setTargetValue((v*0.006)+0.2); });
+    m_varHolder.m_diffusionSmoother.setCurrentAndTargetValue( ( val * 0.006 ) + 0.2 );
+    
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::earlyHPFCutoff );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [this](Sample v){m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+    m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::earlyLPFCutoff );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [this](Sample v){m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+    m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+
+    
+    
+       p = vts.getParameter( parameterIDs::mainName + parameterIDs::size );
+       val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+       m_paramHandler.addParameter(p, [this](Sample v)
+                                   {
+                                       v *= 0.01;
+                                       v =  (v <= 0.5) ? std::pow( 2.0, -( 0.5 - v )*3.0 ) : std::pow( 2.0, v - 0.5 );
+                                       m_varHolder.m_sizeSmoother.setTargetValue( v );
+                                   } );
+       val *= 0.01;
+       val = (val <= 0.5) ? std::pow( 2.0, -( 0.5 - val )*3.0 ) : std::pow( 2.0, val - 0.5 );
+       m_varHolder.m_sizeSmoother.setCurrentAndTargetValue( val );
+
+       p = vts.getParameter( parameterIDs::mainName + parameterIDs::modDepth );
+       val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+       m_paramHandler.addParameter(p, [this](Sample v)
+                                   {
+                                       auto depth = std::pow( v * 0.008, 2 );
+                                       m_varHolder.m_modDSmoother.setTargetValue( depth );
+                                   } );
+       auto depth = std::pow( val * 0.008, 2 );
+       m_varHolder.m_modDSmoother.setCurrentAndTargetValue( depth );
+
+       p = vts.getParameter( parameterIDs::mainName + parameterIDs::modRate );
+       val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+       m_paramHandler.addParameter(p, [this](Sample v)
+                                   {
+                                       auto coef =  1.0 - calculateLPFCoefficient( v, m_SR );
+                                       m_varHolder.m_modRSmoother.setTargetValue( v );
+                                       m_varHolder.m_modDampSmoother.setTargetValue( coef );
+                                   } );
+       auto coef = 1.0 - calculateLPFCoefficient( val, m_SR );
+       m_varHolder.m_modRSmoother.setCurrentAndTargetValue( val );
+       m_varHolder.m_modDampSmoother.setCurrentAndTargetValue( coef );
+}
+
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================

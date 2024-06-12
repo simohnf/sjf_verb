@@ -9,11 +9,12 @@
 #ifndef sjf_verb_lateProcessing_h
 #define sjf_verb_lateProcessing_h
 
-#include "../sjf_audio/sjf_audioUtilitiesC++.h"
+#include "../sjf_audio/sjf_audioUtilities.h"
 #include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_rev.h"
 #include "../sjf_audio/sjf_oscillators.h"
 #include "../sjf_audio/sjf_modulator.h"
+#include "../sjf_audio/sjf_parameterHandler.h"
 #include "parameterIDs.h"
 #include "sjf_verb_lateProcessor_DSP_Wrappers.h"
 
@@ -25,7 +26,8 @@ class sjf_verb_lateProcessor
     using randArray = sjf::ctr::rArray< Sample, 4096, UNIX_TIMESTAMP +'l'+'a'+'t'+'e' >;
     
 public:
-    sjf_verb_lateProcessor() {}
+    sjf_verb_lateProcessor( juce::AudioProcessorValueTreeState& vts ) : m_paramHandler(vts)
+        { addParametersToHandler( vts ); }
     ~sjf_verb_lateProcessor(){}
     
     
@@ -42,6 +44,8 @@ public:
     lateDSP::varHolder<Sample> m_varHolder;
     
 private:
+    
+    void addParametersToHandler( juce::AudioProcessorValueTreeState& vts );
     
     Sample m_SR{ 44100 };
     parameterIDs::lateTypesEnum m_lateType{ parameterIDs::lateTypesEnum::fdn };
@@ -146,8 +150,10 @@ private:
     
     
     fdnVariant m_fdn;
-//    std::unique_ptr< lateDSP::fdnWrapper<Sample> >       m_fdn;
-//    std::unique_ptr< lateDSP::apLoopWrapper<Sample> >    m_apLoop;
     apLoopVariant m_apLoop;
+    
+    
+    
+    sjf::parameterHandler::paramHandlerVector m_paramHandler;
 };
 #endif /* sjf_verb_lateProcessing_h */

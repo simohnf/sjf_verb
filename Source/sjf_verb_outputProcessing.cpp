@@ -34,7 +34,7 @@ void sjf_verb_outputProcessor<INTERPOLATION>::initialise( Sample sampleRate, int
 template< typename INTERPOLATION >
 void sjf_verb_outputProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer<Sample> &outputBuffer, juce::AudioBuffer<Sample> &revBuffer, size_t blockSize)
 {
-    
+    m_paramHandler.triggerCallbacks();
     if( m_shimLevelSmoother.getTargetValue() == 0. && m_shimLevelSmoother.getCurrentValue() == 0. )
         revBuffer.clear();
     else
@@ -99,6 +99,38 @@ template< typename INTERPOLATION >
 void sjf_verb_outputProcessor<INTERPOLATION>::setMonoLow( bool monoLow )
 {
     m_monoLow = monoLow;
+}
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+//=============================//=============================//=============================//=============================
+template< typename INTERPOLATION >
+void sjf_verb_outputProcessor<INTERPOLATION>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
+{
+    auto p = vts.getParameter( parameterIDs::mainName + parameterIDs::monoLow );
+    auto val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [ this ]( Sample v ) { setMonoLow( static_cast< bool >( v ) ); } );
+    setMonoLow( static_cast< bool >( val ) );
+
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::shimmerLevel );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter( p, [this]( Sample v ) { m_shimLevelSmoother.setTargetValue( std::pow( v*0.003, 2 ) ); } );
+    m_shimLevelSmoother.setCurrentAndTargetValue( std::pow( val*0.003, 2 ) );
+
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::shimmerTransposition );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter( p, [this]( Sample v )
+                                {
+                                    m_shimShiftSmoother[0].setTargetValue( std::pow( 2.0, v/12.0 ) );
+                                    m_shimShiftSmoother[1].setTargetValue( std::pow( 2.0, -v/12.0 ) );
+                                } );
+    m_shimShiftSmoother[0].setTargetValue( std::pow( 2.0, val/12.0 ) );
+    m_shimShiftSmoother[1].setTargetValue( std::pow( 2.0, -val/12.0 ) );
+
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::shimmerDualVoice );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter( p, [this]( Sample v ) { setShimmerDualVoice( static_cast<bool>( v ) ); } );
+    setShimmerDualVoice( static_cast<bool>( val ) );
 }
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================

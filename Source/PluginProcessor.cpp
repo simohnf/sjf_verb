@@ -32,11 +32,11 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
                                 [this]( int v)
                                 {
         jassert( parameterIDs::interpMap.find( v ) != parameterIDs::interpMap.end() );
-        m_verb.setInterpolationType(parameterIDs::interpMap.find( v )->second, valueTreeState, getParameters() );
+        m_verb.setInterpolationType(parameterIDs::interpMap.find( v )->second );
                                 });
     jassert( parameterIDs::interpMap.find( val ) != parameterIDs::interpMap.end() );
 
-    m_verb.setInterpolationType( sjf::interpolation::interpolatorTypes::pureData, valueTreeState, getParameters() );
+    m_verb.setInterpolationType( sjf::interpolation::interpolatorTypes::pureData );
     m_verb.initialise( getSampleRate(), getBlockSize(), std::max( getTotalNumInputChannels(), getTotalNumOutputChannels() ) );
     
     

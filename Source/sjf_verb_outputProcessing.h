@@ -12,6 +12,7 @@
 #include "../sjf_audio/sjf_audioUtilities.h"
 #include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_rev.h"
+#include "../sjf_audio/sjf_parameterHandler.h"
 #include "parameterIDs.h"
 
 template< typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< float > >
@@ -19,7 +20,8 @@ class sjf_verb_outputProcessor
 {
     using Sample = float;
 public:
-    sjf_verb_outputProcessor(){}
+    sjf_verb_outputProcessor( juce::AudioProcessorValueTreeState& vts ) : m_paramHandler(vts)
+        { addParametersToHandler( vts ); }
     ~sjf_verb_outputProcessor(){}
     
     void initialise( Sample sampleRate, int nChannels );
@@ -34,6 +36,9 @@ public:
     void setShimmerDualVoice( bool dualVoice ){ m_shimmerDualVoice = dualVoice; }
     
 private:
+    void addParametersToHandler( juce::AudioProcessorValueTreeState& vts );
+    
+    sjf::parameterHandler::paramHandlerVector m_paramHandler;
     
     size_t NCHANNELS{2};
     bool m_monoLow{false}, m_shimmerDualVoice{false};

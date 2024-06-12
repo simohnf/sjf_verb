@@ -46,7 +46,7 @@ public:
     
     void processBlock( juce::AudioBuffer<float>& buffer ){ std::visit( verbVisitor{ buffer }, m_verb ); }
     
-    void setInterpolationType( sjf::interpolation::interpolatorTypes interpType, juce::AudioProcessorValueTreeState &vts,  const juce::Array<juce::AudioProcessorParameter*>& params )
+    void setInterpolationType( sjf::interpolation::interpolatorTypes interpType )
     {
         std::visit( verbReseter{}, m_verb );
         switch (interpType) {
@@ -75,8 +75,8 @@ public:
                 m_verb = std::make_unique<verbLin>( m_vts );
                 break;
         }
-//        vts.removeParameterListener(<#StringRef parameterID#>, <#Listener *listener#>)
-        std::visit( verbParamAdder{ vts, params }, m_verb );
+        
+        std::visit( verbParamAdder{}, m_verb );
         std::visit( verbInitialiser{ m_sampleRate, m_samplesPerBlock, m_nChannels }, m_verb );
     }
    
@@ -115,19 +115,15 @@ private:
     
     struct verbParamAdder
     {
-        verbParamAdder( juce::AudioProcessorValueTreeState &vts, const juce::Array<juce::AudioProcessorParameter*>& params ) :
-            m_vts(vts), m_params(params)
+        verbParamAdder( )
         {}
-        void operator()( verbNonePtr& v ){ v->addParametersToHandler( /*m_vts,*/ m_params ); }
-        void operator()( verbLinPtr& v ){ v->addParametersToHandler( /*m_vts,*/ m_params ); }
-        void operator()( verbCubPtr& v ){ v->addParametersToHandler( /*m_vts,*/ m_params ); }
-        void operator()( verbPDPtr& v ){ v->addParametersToHandler( /*m_vts,*/ m_params ); }
-        void operator()( verb4pPtr& v ){ v->addParametersToHandler( /*m_vts,*/ m_params ); }
-        void operator()( verbGodPtr& v ){ v->addParametersToHandler( /*m_vts,*/ m_params ); }
-        void operator()( verbHerPtr& v ){ v->addParametersToHandler( /*m_vts,*/ m_params ); }
-    private:
-        juce::AudioProcessorValueTreeState& m_vts;
-        const juce::Array<juce::AudioProcessorParameter*>& m_params;
+        void operator()( verbNonePtr& v ){ v->addParametersToHandler( ); }
+        void operator()( verbLinPtr& v ){ v->addParametersToHandler( ); }
+        void operator()( verbCubPtr& v ){ v->addParametersToHandler( ); }
+        void operator()( verbPDPtr& v ){ v->addParametersToHandler( ); }
+        void operator()( verb4pPtr& v ){ v->addParametersToHandler( ); }
+        void operator()( verbGodPtr& v ){ v->addParametersToHandler( ); }
+        void operator()( verbHerPtr& v ){ v->addParametersToHandler( ); }
     };
     //===================//===================//===================//===================//===================
     //===================//===================//===================//===================//===================

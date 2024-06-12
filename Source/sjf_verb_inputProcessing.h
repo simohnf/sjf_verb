@@ -9,9 +9,11 @@
 #ifndef sjf_verb_inputProcessing_h
 #define sjf_verb_inputProcessing_h
 
-#include "../sjf_audio/sjf_audioUtilitiesC++.h"
+#include "../sjf_audio/sjf_audioUtilities.h"
 #include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_rev.h"
+#include "../sjf_audio/sjf_parameterHandler.h"
+
 #include "parameterIDs.h"
 
 template< typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< float > >
@@ -19,7 +21,8 @@ class sjf_verb_inputProcessor
 {
     using Sample = float;
 public:
-    sjf_verb_inputProcessor(){}
+    sjf_verb_inputProcessor( juce::AudioProcessorValueTreeState& vts ) : m_paramHandler(vts)
+    { addParametersToHandler( vts ); }
     ~sjf_verb_inputProcessor(){}
     
     void initialise( Sample sampleRate, int numberOfChannels );
@@ -32,6 +35,8 @@ public:
 
     juce::LinearSmoothedValue< Sample > m_preDelaySmoother, m_LPFSmoother, m_HPFSmoother;
 private:
+    void addParametersToHandler( juce::AudioProcessorValueTreeState& vts );
+    
     Sample m_SR {44100};
     
     
@@ -41,6 +46,7 @@ private:
     size_t NCHANNELS{2};
     bool m_reversed{false};
     
+    sjf::parameterHandler::paramHandlerVector m_paramHandler;
 };
 
 #endif /* sjf_verb_inputProcessing_h */

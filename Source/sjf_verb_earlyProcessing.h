@@ -9,11 +9,12 @@
 #ifndef sjf_verb_earlyProcessing_h
 #define sjf_verb_earlyProcessing_h
 
-#include "../sjf_audio/sjf_audioUtilitiesC++.h"
+#include "../sjf_audio/sjf_audioUtilities.h"
 #include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_rev.h"
 #include "../sjf_audio/sjf_oscillators.h"
 #include "../sjf_audio/sjf_modulator.h"
+#include "../sjf_audio/sjf_parameterHandler.h"
 #include "parameterIDs.h"
 #include "sjf_verb_earlyProcessor_DSP_Wrappers.h"
 
@@ -25,7 +26,8 @@ class sjf_verb_earlyProcessor
     using randArray = sjf::ctr::rArray< Sample, 4096, UNIX_TIMESTAMP +'e'+'a'+'r'+'l'+'y' >;
     
 public:
-    sjf_verb_earlyProcessor() {}
+    sjf_verb_earlyProcessor( juce::AudioProcessorValueTreeState& vts ) : m_paramHandler(vts)
+        { addParametersToHandler( vts ); }
     ~sjf_verb_earlyProcessor(){}
     
     size_t initialise( Sample sampleRate, int numberOfChannels );
@@ -38,6 +40,7 @@ public:
     earlyDSP::varHolder<Sample> m_varHolder { };
     
 private:
+    void addParametersToHandler( juce::AudioProcessorValueTreeState& vts );
     
     void filterBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize );
 
@@ -58,6 +61,8 @@ private:
     size_t sap_NSTAGES{8};
 
     parameterIDs::earlyTypesEnum m_earlyType{ parameterIDs::earlyTypesEnum::rotDelDif };
+    
+    sjf::parameterHandler::paramHandlerVector m_paramHandler;
 };
 
 #endif /* sjf_verb_earlyProcessing_h */

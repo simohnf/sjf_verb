@@ -39,6 +39,7 @@ void sjf_verb_inputProcessor<INTERPOLATION>::initialise( Sample sampleRate, int 
 template< typename INTERPOLATION >
 void sjf_verb_inputProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer<Sample> &revBuffer, size_t blockSize )
 {
+    m_paramHandler.triggerCallbacks();
     Sample samp = 0.0, pdDT = 0, lpfCO = 0, hpfCO= 0;
     if ( m_reversed )
     {
@@ -90,6 +91,33 @@ template< typename INTERPOLATION >
 void sjf_verb_inputProcessor<INTERPOLATION>::setReversed( bool shouldReverse)
 {
     m_reversed = shouldReverse;
+}
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+//=======================================//=======================================//=======================================
+template< typename INTERPOLATION >
+void sjf_verb_inputProcessor<INTERPOLATION>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
+{
+    auto p = vts.getParameter( parameterIDs::mainName + parameterIDs::inputHPFCutoff );
+    auto val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [this](Sample v){ m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+    m_HPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+    
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::inputLPFCutoff );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [this](Sample v){ m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(v,m_SR));});
+    m_LPFSmoother.setTargetValue(1.0-calculateLPFCoefficient(val,m_SR));
+    
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::preDelay );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [this](Sample v){ m_preDelaySmoother.setTargetValue( v * 0.001 * m_SR ); });
+    m_preDelaySmoother.setCurrentAndTargetValue( val * 0.001 * m_SR );
+    
+    p = vts.getParameter( parameterIDs::mainName + parameterIDs::reverse );
+    val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
+    m_paramHandler.addParameter(p, [this](Sample v){ setReversed( static_cast< bool >( v ) ); } );
+    setReversed( static_cast< bool >( val ) );
 }
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
