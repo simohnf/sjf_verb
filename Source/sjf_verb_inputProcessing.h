@@ -16,7 +16,7 @@
 
 #include "parameterIDs.h"
 
-template< typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< float > >
+template< sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
 class sjf_verb_inputProcessor
 {
     using Sample = float;
@@ -29,8 +29,6 @@ public:
     
     void processBlock( juce::AudioBuffer< Sample >& revBuffer, size_t blockSize );
     
-    void setInterpolationType( sjf::interpolation::interpolatorTypes interpType );
-    
     void setReversed( bool shouldReverse);
 
     juce::LinearSmoothedValue< Sample > m_preDelaySmoother, m_LPFSmoother, m_HPFSmoother;
@@ -40,7 +38,7 @@ private:
     Sample m_SR {44100};
     
     
-    std::vector< sjf::delayLine::reverseDelay< Sample, INTERPOLATION > > m_preDelays;
+    std::vector< sjf::delayLine::reverseDelay< Sample, interpType > > m_preDelays;
     std::vector< sjf::filters::damper< Sample > > m_inputLPF, m_inputHPF;
     
     size_t NCHANNELS{2};

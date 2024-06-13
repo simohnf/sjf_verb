@@ -8,8 +8,8 @@
 
 #include "sjf_verb_outputProcessing.h"
 
-template< typename INTERPOLATION >
-void sjf_verb_outputProcessor<INTERPOLATION>::initialise( Sample sampleRate, int nChannels )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_outputProcessor< interpType >::initialise( Sample sampleRate, int nChannels )
 {
     NCHANNELS = nChannels;
     if ( NCHANNELS != 2)
@@ -31,8 +31,8 @@ void sjf_verb_outputProcessor<INTERPOLATION>::initialise( Sample sampleRate, int
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-template< typename INTERPOLATION >
-void sjf_verb_outputProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer<Sample> &outputBuffer, juce::AudioBuffer<Sample> &revBuffer, size_t blockSize)
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_outputProcessor<interpType>::processBlock( juce::AudioBuffer<Sample> &outputBuffer, juce::AudioBuffer<Sample> &revBuffer, size_t blockSize)
 {
     m_paramHandler.triggerCallbacks();
     if( m_shimLevelSmoother.getTargetValue() == 0. && m_shimLevelSmoother.getCurrentValue() == 0. )
@@ -95,8 +95,8 @@ void sjf_verb_outputProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer<Sa
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-template< typename INTERPOLATION >
-void sjf_verb_outputProcessor<INTERPOLATION>::setMonoLow( bool monoLow )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_outputProcessor<interpType>::setMonoLow( bool monoLow )
 {
     m_monoLow = monoLow;
 }
@@ -104,8 +104,8 @@ void sjf_verb_outputProcessor<INTERPOLATION>::setMonoLow( bool monoLow )
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-template< typename INTERPOLATION >
-void sjf_verb_outputProcessor<INTERPOLATION>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_outputProcessor<interpType>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
 {
     auto p = vts.getParameter( parameterIDs::mainName + parameterIDs::monoLow );
     auto val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
@@ -137,10 +137,10 @@ void sjf_verb_outputProcessor<INTERPOLATION>::addParametersToHandler( juce::Audi
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template class sjf_verb_outputProcessor<sjf::interpolation::noneInterpolate<float> >;
-template class sjf_verb_outputProcessor<sjf::interpolation::linearInterpolate<float> >;
-template class sjf_verb_outputProcessor<sjf::interpolation::cubicInterpolate<float> >;
-template class sjf_verb_outputProcessor<sjf::interpolation::fourPointInterpolatePD<float> >;
-template class sjf_verb_outputProcessor<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
-template class sjf_verb_outputProcessor<sjf::interpolation::cubicInterpolateGodot<float> >;
-template class sjf_verb_outputProcessor<sjf::interpolation::cubicInterpolateHermite<float> >;
+template class sjf_verb_outputProcessor<sjf::interpolation::interpolatorTypes::none >;
+template class sjf_verb_outputProcessor<sjf::interpolation::interpolatorTypes::linear >;
+template class sjf_verb_outputProcessor<sjf::interpolation::interpolatorTypes::cubic >;
+template class sjf_verb_outputProcessor<sjf::interpolation::interpolatorTypes::pureData >;
+template class sjf_verb_outputProcessor<sjf::interpolation::interpolatorTypes::fourthOrder >;
+template class sjf_verb_outputProcessor<sjf::interpolation::interpolatorTypes::godot >;
+template class sjf_verb_outputProcessor<sjf::interpolation::interpolatorTypes::hermite >;

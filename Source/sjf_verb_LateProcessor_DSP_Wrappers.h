@@ -103,7 +103,7 @@ namespace lateDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template<typename Sample, typename MIXER = sjf::mixers::Householder<Sample>, typename LIMITER = sjf::rev::fbLimiters::nolimit<Sample>, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD<Sample> >
+    template<typename Sample, typename MIXER = sjf::mixers::Householder<Sample>, typename LIMITER = sjf::rev::fbLimiters::nolimit<Sample>, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
     struct fdnWrapper
     {
         fdnWrapper( const size_t nChannels, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), fdn(nChannels)
@@ -135,8 +135,6 @@ namespace lateDSP
         {
             vect<Sample> samps ( NCHANNELS, 0 );
             Sample dt = 0;
-//            fdn.setMixType( vars.fdnMix );
-//            fdn.setControlFB( vars.ControlFB );
             for( auto i = 0; i < blockSize; ++i )
             {
                 for ( auto c = 0; c < NCHANNELS; ++c )
@@ -162,7 +160,7 @@ namespace lateDSP
         
     private:
         const size_t NCHANNELS;
-        sjf::rev::fdn<Sample, MIXER, LIMITER, INTERPOLATION> fdn;
+        sjf::rev::fdn<Sample, MIXER, LIMITER, interpType> fdn;
         vect<Sample> m_DTs, m_apDTs;
         vect< modulator<Sample> > m_modulators, m_apModulators;
     };
@@ -170,7 +168,7 @@ namespace lateDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template<typename Sample, typename LIMITER = sjf::rev::fbLimiters::nolimit<Sample>, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD<Sample> >
+    template<typename Sample, typename LIMITER = sjf::rev::fbLimiters::nolimit<Sample>, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
     struct apLoopWrapper
     {
         apLoopWrapper( const size_t nChannels, const size_t nStages, const size_t apPerStage, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), APPERSTAGE(apPerStage), apLoop(nStages, apPerStage)
@@ -237,7 +235,7 @@ namespace lateDSP
         
     private:
         const size_t NCHANNELS, NSTAGES, APPERSTAGE;
-        sjf::rev::allpassLoop<Sample, LIMITER, INTERPOLATION> apLoop;
+        sjf::rev::allpassLoop<Sample, LIMITER, interpType> apLoop;
         twoDArray<Sample> m_DTs;
         twoDArray< modulator<Sample> > m_modulators;
     };

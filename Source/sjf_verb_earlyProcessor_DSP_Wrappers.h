@@ -49,7 +49,7 @@ namespace earlyDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< Sample > >
+    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
     struct rddWrapper
     {
         rddWrapper( const size_t nChannels, const size_t nStages, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), NMODCHANNELS(std::sqrt(NCHANNELS)), rdd(NCHANNELS,NSTAGES,NMODCHANNELS)
@@ -112,14 +112,14 @@ namespace earlyDSP
     private:
         const size_t NCHANNELS, NSTAGES, NMODCHANNELS;
         twoDArray<Sample> m_DTs;
-        sjf::rev::rotDelDif< Sample > rdd;
+        sjf::rev::rotDelDif< Sample, interpType > rdd;
         twoDArray< modulator< Sample > > m_modulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< Sample > >
+    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
     struct mtWrapper
     {
         mtWrapper( const size_t nChannels, const size_t nTaps, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NTAPS(nTaps), MODMAX( std::sqrt(NTAPS) ), mt( NCHANNELS, NTAPS )
@@ -174,14 +174,14 @@ namespace earlyDSP
     private:
         const size_t NCHANNELS, NTAPS, MODMAX;
         twoDArray<Sample> m_DTs, m_gains;
-        vect< sjf::rev::multiTap< Sample > > mt;
+        vect< sjf::rev::multiTap< Sample, interpType > > mt;
         twoDArray< modulator< Sample > > m_modulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< Sample > >
+    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
     struct sapWrapper
     {
         sapWrapper( const size_t nChannels, const size_t nStages, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), sap( NCHANNELS, NSTAGES )
@@ -226,14 +226,14 @@ namespace earlyDSP
     private:
         const size_t NCHANNELS, NSTAGES;
         twoDArray<Sample> m_DTs;
-        vect< sjf::rev::seriesAllpass< Sample > > sap;
+        vect< sjf::rev::seriesAllpass< Sample, interpType > > sap;
         twoDArray< modulator< Sample > > m_modulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample, typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< Sample > >
+    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
     struct mtsapWrapper
     {
         mtsapWrapper( const size_t nChannels, const size_t nSAPStages, const size_t nTaps, const randArray<Sample>& rArr, const Sample sampleRate ) :
@@ -246,7 +246,6 @@ namespace earlyDSP
             auto moffset = 1.0 / static_cast< Sample >( NCHANNELS*NTAPS + NCHANNELS * NSTAGES  );
             sjf::utilities::vectorResize( m_mtDTs, NCHANNELS, NTAPS, static_cast<Sample>(0) );
             sjf::utilities::vectorResize( m_mtGains, NCHANNELS, NTAPS, static_cast<Sample>(0) );
-//            sjf::utilities::vectorResize( m_mtModulators, NCHANNELS, NTAPS );
             auto vnBand = maxDtSampsMT / NTAPS;
             for ( auto i = 0; i < NCHANNELS; ++i )
             {
@@ -268,7 +267,6 @@ namespace earlyDSP
                 {
                     m_mtGains[ i ][ j ] *= invSum * 0.5;
                     mt[ i ].setGain( m_mtGains[ i ][ j ], j );
-//                    m_mtModulators[ i ][ j ].initialise( moffset*( NTAPS*i + j ), m_mtGains[ i ][ j ] );
                 }
             }
             
@@ -299,10 +297,7 @@ namespace earlyDSP
                 for ( auto c = 0; c < NCHANNELS; ++c )
                 {
                     for ( auto t = 0; t < NTAPS; ++t )
-                    {
                         mt[ c ].setDelayTimeSamps( m_mtDTs[ c ][ t ] * vars.size, t );
-//                        mt[ c ].setGain( m_mtModulators[ c ][ t ].process( m_mtGains[c][t], vars.mPhase, vars.mDepth, vars.mDamp ), t );
-                    }
                     samp = mt[ c ].process( buffer.getSample( c, i ) );
                     
                     sap[ c ].setCoefs( vars.diffusion );
@@ -318,9 +313,9 @@ namespace earlyDSP
     private:
         const size_t NCHANNELS, NSTAGES, NTAPS;
         twoDArray<Sample> m_sapDTs, m_mtDTs, m_mtGains;
-        vect< sjf::rev::seriesAllpass< Sample > > sap;
-        vect< sjf::rev::multiTap< Sample > > mt;
-        twoDArray< modulator< Sample > > /* m_mtModulators, */ m_sapModulators;
+        vect< sjf::rev::seriesAllpass< Sample, interpType > > sap;
+        vect< sjf::rev::multiTap< Sample, interpType > > mt;
+        twoDArray< modulator< Sample > > m_sapModulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================

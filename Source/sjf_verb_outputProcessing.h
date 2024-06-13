@@ -15,7 +15,7 @@
 #include "../sjf_audio/sjf_parameterHandler.h"
 #include "parameterIDs.h"
 
-template< typename INTERPOLATION = sjf::interpolation::fourPointInterpolatePD< float > >
+template< sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
 class sjf_verb_outputProcessor
 {
     using Sample = float;
@@ -42,7 +42,7 @@ private:
     
     size_t NCHANNELS{2};
     bool m_monoLow{false}, m_shimmerDualVoice{false};
-    std::array< sjf::delayLine::pitchShift<Sample, INTERPOLATION>, 2 > m_shimVoice;
+    std::array< sjf::delayLine::pitchShift<Sample, interpType>, 2 > m_shimVoice;
     sjf::filters::damper< Sample > m_monoLowFilt;
     Sample m_coef{0.1};
     

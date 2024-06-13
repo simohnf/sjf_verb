@@ -12,8 +12,8 @@
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename INTERPOLATION >
-size_t sjf_verb_lateProcessor<INTERPOLATION>::initialise( Sample sampleRate, int numberOfChannels )
+template< sjf::interpolation::interpolatorTypes interpType >
+size_t sjf_verb_lateProcessor<interpType>::initialise( Sample sampleRate, int numberOfChannels )
 {
     m_SR = sampleRate;
     NCHANNELS = numberOfChannels;
@@ -37,8 +37,8 @@ size_t sjf_verb_lateProcessor<INTERPOLATION>::initialise( Sample sampleRate, int
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename INTERPOLATION >
-void sjf_verb_lateProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_lateProcessor<interpType>::processBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize )
 {
     m_paramHandler.triggerCallbacks();
     if( m_stateChanged )
@@ -46,31 +46,36 @@ void sjf_verb_lateProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer< Sam
     m_stateChanged = false;
     switch (m_lateType) {
         case parameterIDs::lateTypesEnum::fdn:
-            std::visit( fdnVisitor{ buffer,blockSize,m_varHolder}, m_fdn );
+            std::visit( fdnVisitor<interpType>{ buffer,blockSize,m_varHolder }, m_fdn );
             break;
         case parameterIDs::lateTypesEnum::apLoop:
-            std::visit( apLoopVisitor{ buffer,blockSize,m_varHolder}, m_apLoop );
+            std::visit( apLoopVisitor<interpType>{ buffer,blockSize,m_varHolder}, m_apLoop );
             break;
         default:
             break;
     }
 }
-
-
-
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename INTERPOLATION >
-void sjf_verb_lateProcessor<INTERPOLATION>::setLateType( parameterIDs::lateTypesEnum type )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_lateProcessor<interpType>::setLateType( parameterIDs::lateTypesEnum type )
 {
+    using fdnWrapNoMixFB = typename fdnVariantStruct<interpType>::fdnWrapNoMixFB;
+    using fdnWrapHouseFB = typename fdnVariantStruct<interpType>::fdnWrapHouseFB;
+    using fdnWrapHadFB = typename fdnVariantStruct<interpType>::fdnWrapHadFB;
+    using fdnWrapNoMix = typename fdnVariantStruct<interpType>::fdnWrapNoMix;
+    using fdnWrapHouse = typename fdnVariantStruct<interpType>::fdnWrapHouse;
+    using fdnWrapHad = typename fdnVariantStruct<interpType>::fdnWrapHad;
+    using apLoopWrapFB = typename apLoopVariantStruct<interpType>::apLoopWrapFB;
+    using apLoopWrap = typename apLoopVariantStruct<interpType>::apLoopWrap;
     m_lateType = type;
     
     switch (m_lateType) {
         case parameterIDs::lateTypesEnum::fdn:
-            std::visit( apLoopReseter(), m_apLoop );
+            std::visit( apLoopReseter<interpType>(), m_apLoop );
             if( m_fbLimit )
                 switch (m_fdnMixer) {
                     case sjf::rev::mixers::none:
@@ -105,7 +110,7 @@ void sjf_verb_lateProcessor<INTERPOLATION>::setLateType( parameterIDs::lateTypes
                 m_apLoop = std::make_unique< apLoopWrapFB >(NCHANNELS, apl_NSTAGES, apl_NAP_PERSTAGE, m_randArray, m_SR);
             else
                 m_apLoop = std::make_unique< apLoopWrap >(NCHANNELS, apl_NSTAGES, apl_NAP_PERSTAGE, m_randArray, m_SR);
-            std::visit( fdnReseter(), m_fdn );
+            std::visit( fdnReseter<interpType>(), m_fdn );
             break;
         default:
             break;
@@ -118,8 +123,8 @@ void sjf_verb_lateProcessor<INTERPOLATION>::setLateType( parameterIDs::lateTypes
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-template< typename INTERPOLATION >
-void sjf_verb_lateProcessor<INTERPOLATION>::setMixType( sjf::rev::mixers mixType )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_lateProcessor<interpType>::setMixType( sjf::rev::mixers mixType )
 {
     m_fdnMixer = mixType;
     m_stateChanged = true;
@@ -130,8 +135,8 @@ void sjf_verb_lateProcessor<INTERPOLATION>::setMixType( sjf::rev::mixers mixType
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-template< typename INTERPOLATION >
-void sjf_verb_lateProcessor<INTERPOLATION>::setFBLimit( bool shouldLimitFeedback )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_lateProcessor<interpType>::setFBLimit( bool shouldLimitFeedback )
 {
     m_fbLimit = shouldLimitFeedback;
     m_stateChanged = true;
@@ -142,8 +147,8 @@ void sjf_verb_lateProcessor<INTERPOLATION>::setFBLimit( bool shouldLimitFeedback
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
-template< typename INTERPOLATION >
-void sjf_verb_lateProcessor<INTERPOLATION>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_lateProcessor<interpType>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
 {
     
       auto p = vts.getParameter( parameterIDs::mainName + parameterIDs::lateReflectionType );
@@ -232,10 +237,10 @@ void sjf_verb_lateProcessor<INTERPOLATION>::addParametersToHandler( juce::AudioP
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template class sjf_verb_lateProcessor<sjf::interpolation::noneInterpolate<float> >;
-template class sjf_verb_lateProcessor<sjf::interpolation::linearInterpolate<float> >;
-template class sjf_verb_lateProcessor<sjf::interpolation::cubicInterpolate<float> >;
-template class sjf_verb_lateProcessor<sjf::interpolation::fourPointInterpolatePD<float> >;
-template class sjf_verb_lateProcessor<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
-template class sjf_verb_lateProcessor<sjf::interpolation::cubicInterpolateGodot<float> >;
-template class sjf_verb_lateProcessor<sjf::interpolation::cubicInterpolateHermite<float> >;
+template class sjf_verb_lateProcessor<sjf::interpolation::interpolatorTypes::none >;
+template class sjf_verb_lateProcessor<sjf::interpolation::interpolatorTypes::linear >;
+template class sjf_verb_lateProcessor<sjf::interpolation::interpolatorTypes::cubic >;
+template class sjf_verb_lateProcessor<sjf::interpolation::interpolatorTypes::pureData >;
+template class sjf_verb_lateProcessor<sjf::interpolation::interpolatorTypes::fourthOrder >;
+template class sjf_verb_lateProcessor<sjf::interpolation::interpolatorTypes::godot >;
+template class sjf_verb_lateProcessor<sjf::interpolation::interpolatorTypes::hermite >;

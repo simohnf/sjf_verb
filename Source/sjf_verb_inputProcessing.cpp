@@ -12,8 +12,8 @@
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-template< typename INTERPOLATION >
-void sjf_verb_inputProcessor<INTERPOLATION>::initialise( Sample sampleRate, int numberOfChannels )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_inputProcessor<interpType>::initialise( Sample sampleRate, int numberOfChannels )
 {
     m_SR = sampleRate;
     NCHANNELS = numberOfChannels;
@@ -36,8 +36,8 @@ void sjf_verb_inputProcessor<INTERPOLATION>::initialise( Sample sampleRate, int 
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-template< typename INTERPOLATION >
-void sjf_verb_inputProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer<Sample> &revBuffer, size_t blockSize )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_inputProcessor<interpType>::processBlock( juce::AudioBuffer<Sample> &revBuffer, size_t blockSize )
 {
     m_paramHandler.triggerCallbacks();
     Sample samp = 0.0, pdDT = 0, lpfCO = 0, hpfCO= 0;
@@ -87,8 +87,8 @@ void sjf_verb_inputProcessor<INTERPOLATION>::processBlock( juce::AudioBuffer<Sam
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 
-template< typename INTERPOLATION >
-void sjf_verb_inputProcessor<INTERPOLATION>::setReversed( bool shouldReverse)
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_inputProcessor<interpType>::setReversed( bool shouldReverse)
 {
     m_reversed = shouldReverse;
 }
@@ -96,8 +96,8 @@ void sjf_verb_inputProcessor<INTERPOLATION>::setReversed( bool shouldReverse)
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
-template< typename INTERPOLATION >
-void sjf_verb_inputProcessor<INTERPOLATION>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb_inputProcessor<interpType>::addParametersToHandler( juce::AudioProcessorValueTreeState& vts )
 {
     auto p = vts.getParameter( parameterIDs::mainName + parameterIDs::inputHPFCutoff );
     auto val = sjf::juceStuff::getUnNormalisedParameterValue< float >( p );
@@ -124,10 +124,10 @@ void sjf_verb_inputProcessor<INTERPOLATION>::addParametersToHandler( juce::Audio
 //=======================================//=======================================//=======================================
 //=======================================//=======================================//=======================================
 
-template class sjf_verb_inputProcessor<sjf::interpolation::noneInterpolate<float> >;
-template class sjf_verb_inputProcessor<sjf::interpolation::linearInterpolate<float> >;
-template class sjf_verb_inputProcessor<sjf::interpolation::cubicInterpolate<float> >;
-template class sjf_verb_inputProcessor<sjf::interpolation::fourPointInterpolatePD<float> >;
-template class sjf_verb_inputProcessor<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
-template class sjf_verb_inputProcessor<sjf::interpolation::cubicInterpolateGodot<float> >;
-template class sjf_verb_inputProcessor<sjf::interpolation::cubicInterpolateHermite<float> >;
+template class sjf_verb_inputProcessor<sjf::interpolation::interpolatorTypes::none >;
+template class sjf_verb_inputProcessor<sjf::interpolation::interpolatorTypes::linear >;
+template class sjf_verb_inputProcessor<sjf::interpolation::interpolatorTypes::cubic >;
+template class sjf_verb_inputProcessor<sjf::interpolation::interpolatorTypes::pureData >;
+template class sjf_verb_inputProcessor<sjf::interpolation::interpolatorTypes::fourthOrder >;
+template class sjf_verb_inputProcessor<sjf::interpolation::interpolatorTypes::godot >;
+template class sjf_verb_inputProcessor<sjf::interpolation::interpolatorTypes::hermite >;

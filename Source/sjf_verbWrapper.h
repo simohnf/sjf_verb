@@ -13,13 +13,13 @@
 class sjf_verbWrapper
 {
     
-    using verbNone = sjf_verb<sjf::interpolation::noneInterpolate<float> >;
-    using verbLin = sjf_verb<sjf::interpolation::linearInterpolate<float> >;
-    using verbCub = sjf_verb<sjf::interpolation::cubicInterpolate<float> >;
-    using verbPD = sjf_verb<sjf::interpolation::fourPointInterpolatePD<float> >;
-    using verb4p = sjf_verb<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
-    using verbGod = sjf_verb<sjf::interpolation::cubicInterpolateGodot<float> >;
-    using verbHer = sjf_verb<sjf::interpolation::cubicInterpolateHermite<float> >;
+    using verbNone = sjf_verb<sjf::interpolation::interpolatorTypes::none >;
+    using verbLin = sjf_verb<sjf::interpolation::interpolatorTypes::linear >;
+    using verbCub = sjf_verb<sjf::interpolation::interpolatorTypes::cubic >;
+    using verbPD = sjf_verb<sjf::interpolation::interpolatorTypes::pureData >;
+    using verb4p = sjf_verb<sjf::interpolation::interpolatorTypes::fourthOrder >;
+    using verbGod = sjf_verb<sjf::interpolation::interpolatorTypes::godot >;
+    using verbHer = sjf_verb<sjf::interpolation::interpolatorTypes::hermite >;
     
     using verbNonePtr = std::unique_ptr<verbNone>;
     using verbLinPtr = std::unique_ptr<verbLin>;

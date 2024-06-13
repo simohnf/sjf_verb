@@ -18,8 +18,8 @@
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename INTERPOLATION >
-void sjf_verb<INTERPOLATION>::initialise( Sample sampleRate, int samplesPerBlock, int numberOfChannels )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb<interpType>::initialise( Sample sampleRate, int samplesPerBlock, int numberOfChannels )
 {
     m_SR = sampleRate > 0 ? sampleRate : m_SR;
     m_erLevelSmoother.reset( m_SR, 0.05 );
@@ -41,8 +41,8 @@ void sjf_verb<INTERPOLATION>::initialise( Sample sampleRate, int samplesPerBlock
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename INTERPOLATION >
-void sjf_verb<INTERPOLATION>::processBlock( juce::AudioBuffer< Sample >& buffer )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb<interpType>::processBlock( juce::AudioBuffer< Sample >& buffer )
 {
     m_paramHandler.triggerCallbacks();
     
@@ -53,7 +53,6 @@ void sjf_verb<INTERPOLATION>::processBlock( juce::AudioBuffer< Sample >& buffer 
     
     for ( auto i = 0; i < channels; i++ )
         m_revBuffer.addFrom( i, 0, buffer, i, 0, blockSize );
-//        m_revBuffer.copyFrom( i, 0, buffer, i, 0, blockSize );
     for ( auto i = channels; i < intetrnalChannels; i++ )
         m_revBuffer.clear( i, 0, m_revBuffer.getNumSamples() );
     m_inputProcessor.processBlock( m_revBuffer, blockSize );
@@ -85,8 +84,8 @@ void sjf_verb<INTERPOLATION>::processBlock( juce::AudioBuffer< Sample >& buffer 
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename INTERPOLATION >
-void sjf_verb<INTERPOLATION>::addParametersToHandler( )
+template< sjf::interpolation::interpolatorTypes interpType >
+void sjf_verb<interpType>::addParametersToHandler( )
 {
     
     auto p = m_vts.getParameter( parameterIDs::mainName + parameterIDs::earlyReflectionLevel );
@@ -125,8 +124,8 @@ void sjf_verb<INTERPOLATION>::addParametersToHandler( )
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template< typename INTERPOLATION >
-juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb<INTERPOLATION>::createParameterLayout( )
+template< sjf::interpolation::interpolatorTypes interpType >
+juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb<interpType>::createParameterLayout( )
 {
     juce::AudioProcessorValueTreeState::ParameterLayout params;
     
@@ -198,10 +197,10 @@ juce::AudioProcessorValueTreeState::ParameterLayout sjf_verb<INTERPOLATION>::cre
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 
-template class sjf_verb<sjf::interpolation::noneInterpolate<float> >;
-template class sjf_verb<sjf::interpolation::linearInterpolate<float> >;
-template class sjf_verb<sjf::interpolation::cubicInterpolate<float> >;
-template class sjf_verb<sjf::interpolation::fourPointInterpolatePD<float> >;
-template class sjf_verb<sjf::interpolation::fourPointFourthOrderOptimal<float> >;
-template class sjf_verb<sjf::interpolation::cubicInterpolateGodot<float> >;
-template class sjf_verb<sjf::interpolation::cubicInterpolateHermite<float> >;
+template class sjf_verb<sjf::interpolation::interpolatorTypes::none >;
+template class sjf_verb<sjf::interpolation::interpolatorTypes::linear >;
+template class sjf_verb<sjf::interpolation::interpolatorTypes::cubic >;
+template class sjf_verb<sjf::interpolation::interpolatorTypes::pureData >;
+template class sjf_verb<sjf::interpolation::interpolatorTypes::fourthOrder >;
+template class sjf_verb<sjf::interpolation::interpolatorTypes::godot >;
+template class sjf_verb<sjf::interpolation::interpolatorTypes::hermite >;
