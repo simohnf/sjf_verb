@@ -39,7 +39,7 @@ public:
     
     void setLateType( parameterIDs::lateTypesEnum type );
     
-    void setMixType( sjf::rev::mixers mixType );
+    void setMixType( sjf::mixers::mixerTypes mixType );
     
     void setFBLimit( bool shouldLimitFeedback );
     
@@ -57,7 +57,7 @@ private:
     static constexpr randArray m_randArray; // random values for delayTimes
     bool m_fbLimit{false};
     bool m_stateChanged{false};
-    sjf::rev::mixers m_fdnMixer{ sjf::rev::mixers::householder };
+    sjf::mixers::mixerTypes m_fdnMixer{ sjf::mixers::mixerTypes::householder };
 
     typename fdnVariantStruct<interpType>::fdnVariant m_fdn;
     typename apLoopVariantStruct<interpType>::apLoopVariant m_apLoop;

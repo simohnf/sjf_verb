@@ -78,13 +78,13 @@ void sjf_verb_lateProcessor<interpType>::setLateType( parameterIDs::lateTypesEnu
             std::visit( apLoopReseter<interpType>(), m_apLoop );
             if( m_fbLimit )
                 switch (m_fdnMixer) {
-                    case sjf::rev::mixers::none:
+                    case sjf::mixers::mixerTypes::none:
                         m_fdn = std::make_unique< fdnWrapNoMixFB >(fdn_NCHANNELS, m_randArray, m_SR );
                         break;
-                    case sjf::rev::mixers::householder:
+                    case sjf::mixers::mixerTypes::householder:
                         m_fdn = std::make_unique< fdnWrapHouseFB >(fdn_NCHANNELS, m_randArray, m_SR );
                         break;
-                    case sjf::rev::mixers::hadamard:
+                    case sjf::mixers::mixerTypes::hadamard:
                         m_fdn = std::make_unique< fdnWrapHadFB >(fdn_NCHANNELS, m_randArray, m_SR );
                         break;
                     default:
@@ -92,13 +92,13 @@ void sjf_verb_lateProcessor<interpType>::setLateType( parameterIDs::lateTypesEnu
                 }
             else
                 switch (m_fdnMixer) {
-                    case sjf::rev::mixers::none:
+                    case sjf::mixers::mixerTypes::none:
                         m_fdn = std::make_unique< fdnWrapNoMix >(fdn_NCHANNELS, m_randArray, m_SR );
                         break;
-                    case sjf::rev::mixers::householder:
+                    case sjf::mixers::mixerTypes::householder:
                         m_fdn = std::make_unique< fdnWrapHouse >(fdn_NCHANNELS, m_randArray, m_SR );
                         break;
-                    case sjf::rev::mixers::hadamard:
+                    case sjf::mixers::mixerTypes::hadamard:
                         m_fdn = std::make_unique< fdnWrapHad >(fdn_NCHANNELS, m_randArray, m_SR );
                         break;
                     default:
@@ -124,7 +124,7 @@ void sjf_verb_lateProcessor<interpType>::setLateType( parameterIDs::lateTypesEnu
 //=============================//=============================//=============================//=============================
 //=============================//=============================//=============================//=============================
 template< sjf::interpolation::interpolatorTypes interpType >
-void sjf_verb_lateProcessor<interpType>::setMixType( sjf::rev::mixers mixType )
+void sjf_verb_lateProcessor<interpType>::setMixType( sjf::mixers::mixerTypes mixType )
 {
     m_fdnMixer = mixType;
     m_stateChanged = true;
@@ -203,11 +203,11 @@ void sjf_verb_lateProcessor<interpType>::addParametersToHandler( juce::AudioProc
        m_paramHandler.addParameter(p, [this](Sample v)
                                    {
                                        v *= 0.01;
-                                       v =  (v <= 0.5) ? std::pow( 2.0, -( 0.5 - v )*3.0 ) : std::pow( 2.0, v - 0.5 );
+//                                       v =  (v <= 0.5) ? std::pow( 2.0, -( 0.5 - v )*3.0 ) : std::pow( 2.0, v - 0.5 );
                                        m_varHolder.m_sizeSmoother.setTargetValue( v );
                                    } );
        val *= 0.01;
-       val = (val <= 0.5) ? std::pow( 2.0, -( 0.5 - val )*3.0 ) : std::pow( 2.0, val - 0.5 );
+//       val = (val <= 0.5) ? std::pow( 2.0, -( 0.5 - val )*3.0 ) : std::pow( 2.0, val - 0.5 );
        m_varHolder.m_sizeSmoother.setCurrentAndTargetValue( val );
 
        p = vts.getParameter( parameterIDs::mainName + parameterIDs::modDepth );

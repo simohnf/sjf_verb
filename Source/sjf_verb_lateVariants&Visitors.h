@@ -9,22 +9,22 @@
 #ifndef sjf_verb_lateVariants_Visitors_h
 #define sjf_verb_lateVariants_Visitors_h
 using Sample = float;
-using noLimit = sjf::rev::fbLimiters::nolimit<Sample>;
-using limit = sjf::rev::fbLimiters::limit<Sample>;
+//using noLimit = sjf::rev::fbLimiters::nolimit<Sample>;
+//using limit = sjf::rev::fbLimiters::limit<Sample>;
 
+using Mixers = sjf::mixers::mixerTypes;
+using Limiters = sjf::rev::fbLimiters::fbLimiterTypes;
 template< sjf::interpolation::interpolatorTypes interpType >
 struct fdnVariantStruct
 {        
-        using noMix = sjf::mixers::None<Sample>;
-        using houseMix = sjf::mixers::Householder<Sample>;
-        using hadMix = sjf::mixers::Hadamard<Sample>;
+
     
-        using fdnWrapNoMix = lateDSP::fdnWrapper< Sample, noMix, noLimit, interpType >;
-        using fdnWrapHouse = lateDSP::fdnWrapper< Sample, houseMix, noLimit, interpType >;
-        using fdnWrapHad = lateDSP::fdnWrapper< Sample, hadMix, noLimit, interpType >;
-        using fdnWrapNoMixFB = lateDSP::fdnWrapper< Sample, noMix, limit, interpType >;
-        using fdnWrapHouseFB = lateDSP::fdnWrapper< Sample, houseMix, limit, interpType >;
-        using fdnWrapHadFB = lateDSP::fdnWrapper< Sample, hadMix, limit, interpType >;
+        using fdnWrapNoMix = lateDSP::fdnWrapper< Sample, Mixers::none, Limiters::none, interpType >;
+        using fdnWrapHouse = lateDSP::fdnWrapper< Sample, Mixers::householder, Limiters::none, interpType >;
+        using fdnWrapHad = lateDSP::fdnWrapper< Sample, Mixers::hadamard, Limiters::none, interpType >;
+        using fdnWrapNoMixFB = lateDSP::fdnWrapper< Sample, Mixers::none, Limiters::tanh, interpType >;
+        using fdnWrapHouseFB = lateDSP::fdnWrapper< Sample, Mixers::householder, Limiters::tanh, interpType >;
+        using fdnWrapHadFB = lateDSP::fdnWrapper< Sample, Mixers::hadamard, Limiters::tanh, interpType >;
     
         using fdnWrapNoMixPtr = std::unique_ptr< fdnWrapNoMix >;
         using fdnWrapHousePtr = std::unique_ptr< fdnWrapHouse >;
@@ -75,8 +75,8 @@ struct fdnReseter
 template< sjf::interpolation::interpolatorTypes interpType >
 struct apLoopVariantStruct
 {
-    using apLoopWrap = lateDSP::apLoopWrapper<Sample, noLimit, interpType>;
-    using apLoopWrapFB = lateDSP::apLoopWrapper<Sample, limit, interpType>;
+    using apLoopWrap = lateDSP::apLoopWrapper<Sample, Limiters::none, interpType>;
+    using apLoopWrapFB = lateDSP::apLoopWrapper<Sample, Limiters::tanh, interpType>;
 
     using apLoopWrapPtr = std::unique_ptr< apLoopWrap >;
     using apLoopWrapFBPtr = std::unique_ptr< apLoopWrapFB >;

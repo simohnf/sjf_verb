@@ -223,11 +223,11 @@ namespace parameterIDs
     static const juce::String mixHouseholder{ "Householder" };
     static const juce::String mixHadamard{ "Hadamard" };
     static const juce::StringArray fdnMixTypes = { mixNone, mixHouseholder, mixHadamard };
-    static const std::unordered_map< int, sjf::rev::mixers > fdnMixMap
+    static const std::unordered_map< int, sjf::mixers::mixerTypes > fdnMixMap
     {
-        { fdnMixTypes.indexOf(mixNone), sjf::rev::mixers::none },
-        { fdnMixTypes.indexOf(mixHouseholder), sjf::rev::mixers::householder },
-        { fdnMixTypes.indexOf(mixHadamard), sjf::rev::mixers::hadamard }
+        { fdnMixTypes.indexOf(mixNone), sjf::mixers::mixerTypes::none },
+        { fdnMixTypes.indexOf(mixHouseholder), sjf::mixers::mixerTypes::householder },
+        { fdnMixTypes.indexOf(mixHadamard), sjf::mixers::mixerTypes::hadamard }
     };
 
 }
