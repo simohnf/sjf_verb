@@ -15,13 +15,13 @@ namespace lateDSP
     template<typename T>
     using vect = std::vector<T>;
     template<typename T>
-    using twoDArray = vect< vect<T> >;
+    using twoDVect = vect< vect<T> >;
     template<typename Sample>
     using randArray = sjf::ctr::rArray< Sample, 4096, UNIX_TIMESTAMP +'l'+'a'+'t'+'e' >;
     template <typename Sample>
     using phasor = sjf::oscillators::phasor< Sample >;
-    template <typename Sample>
-    using modulator = sjf::modulator::modVoice< Sample >;
+    template <typename Sample, sjf::modulator::modType modType = sjf::modulator::modType::random >
+    using modulator = sjf::modulator::modVoice< Sample, modType >;
     static constexpr size_t PRIME_MAX{10000};
     using primeArray = sjf::utilities::primes<PRIME_MAX>;
 
@@ -101,7 +101,8 @@ namespace lateDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template<typename Sample, sjf::mixers::mixerTypes mixType = sjf::mixers::mixerTypes::householder, sjf::rev::fbLimiters::fbLimiterTypes limitType  = sjf::rev::fbLimiters::fbLimiterTypes::none, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
+    template<typename Sample, sjf::mixers::mixerTypes mixType = sjf::mixers::mixerTypes::householder, sjf::rev::fbLimiters::fbLimiterTypes limitType  = sjf::rev::fbLimiters::fbLimiterTypes::none, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData,
+        sjf::modulator::modType modType = sjf::modulator::modType::random >
     struct fdnWrapper
     {
         fdnWrapper( const size_t nChannels, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), fdn(nChannels)
@@ -160,13 +161,14 @@ namespace lateDSP
         const size_t NCHANNELS;
         sjf::rev::fdn<Sample, mixType, limitType, interpType> fdn;
         vect<Sample> m_DTs, m_apDTs;
-        vect< modulator<Sample> > m_modulators, m_apModulators;
+        vect< modulator<Sample, modType> > m_modulators, m_apModulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template<typename Sample, sjf::rev::fbLimiters::fbLimiterTypes limitType  = sjf::rev::fbLimiters::fbLimiterTypes::none, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
+    template<typename Sample, sjf::rev::fbLimiters::fbLimiterTypes limitType  = sjf::rev::fbLimiters::fbLimiterTypes::none, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData,
+        sjf::modulator::modType modType = sjf::modulator::modType::random  >
     struct apLoopWrapper
     {
         apLoopWrapper( const size_t nChannels, const size_t nStages, const size_t apPerStage, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), APPERSTAGE(apPerStage), apLoop(nStages, apPerStage)
@@ -233,8 +235,8 @@ namespace lateDSP
     private:
         const size_t NCHANNELS, NSTAGES, APPERSTAGE;
         sjf::rev::allpassLoop<Sample, limitType, interpType> apLoop;
-        twoDArray<Sample> m_DTs;
-        twoDArray< modulator<Sample> > m_modulators;
+        twoDVect<Sample> m_DTs;
+        twoDVect< modulator<Sample, modType> > m_modulators;
     };
 }
 

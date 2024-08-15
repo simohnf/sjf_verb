@@ -14,6 +14,8 @@
 #include "../sjf_audio/sjf_compileTimeRandom.h"
 #include "../sjf_audio/sjf_parameterHandler.h"
 #include "../sjf_audio/sjf_rev.h"
+#include "../sjf_audio/sjf_modulator.h"
+
 #include "parameterIDs.h"
 #include "sjf_verb_inputProcessing.h"
 #include "sjf_verb_earlyProcessing.h"

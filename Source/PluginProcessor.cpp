@@ -38,8 +38,6 @@ Sjf_verbAudioProcessor::Sjf_verbAudioProcessor()
 
     m_verb.setInterpolationType( sjf::interpolation::interpolatorTypes::pureData );
     m_verb.initialise( getSampleRate(), getBlockSize(), std::max( getTotalNumInputChannels(), getTotalNumOutputChannels() ) );
-    
-    
 }
 
 Sjf_verbAudioProcessor::~Sjf_verbAudioProcessor()
@@ -166,8 +164,8 @@ bool Sjf_verbAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* Sjf_verbAudioProcessor::createEditor()
 {
-    return new juce::GenericAudioProcessorEditor( *this );
-//    return new Sjf_verbAudioProcessorEditor (*this, valueTreeState);
+//    return new juce::GenericAudioProcessorEditor( *this );
+    return new Sjf_verbAudioProcessorEditor (*this, valueTreeState);
 }
 
 //==============================================================================

@@ -10,7 +10,7 @@
 
 #include <JuceHeader.h>
 #include "sjf_verbWrapper.h"
-#include "sjf_verb.h"
+//#include "sjf_verb.h"
 
 //==============================================================================
 /**

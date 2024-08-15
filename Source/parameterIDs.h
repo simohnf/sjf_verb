@@ -10,6 +10,8 @@
 #define parameterIDs_h
 #include <JuceHeader.h>
 
+#include "../sjf_audio/sjf_modulator.h"
+
 namespace parameterIDs
 {
 
@@ -41,7 +43,7 @@ namespace parameterIDs
     
     static const juce::String modRate = "ModRate"; //y
     static const juce::String modDepth = "ModDepth"; //y
-    static const juce::String modType = "ModType";
+//    static const juce::String modType = "ModType";
 
     static const juce::String shimmerLevel = "ShimmerLevel"; //y
     static const juce::String shimmerTransposition = "ShimmerTransposition"; //y
@@ -54,121 +56,121 @@ namespace parameterIDs
 
 
 
-    enum class idsenum
-    {
-        inputHPFCutoff,
-        inputLPFCutoff,
-        preDelay,
-        reverse,
-        
-        size,
-        
-        earlyHPFCutoff,
-        earlyLPFCutoff,
-        earlyReflectionType,
-        earlyReflectionLevel,
-        earlyDiffusion,
-        
-        lateDiffusion,
-        lateReflectionType,
-        lateReflectionLevel,
-        lateHPFCutoff,
-        lateLPFCutoff,
-        fdnMixType,
-        decay,
-        
-        modRate,
-        modDepth,
-        modType,
-
-        shimmerLevel,
-        shimmerTransposition,
-        shimmerDualVoice,
-        
-        interpolationType,
-        feedbackLimit,
-        monoLow,
-        mix,
-        dry,
-        wet
-    };
-
-    static const std::unordered_map< juce::String, idsenum > id2enum
-    {
-        { inputHPFCutoff, idsenum::inputHPFCutoff },
-        { inputLPFCutoff, idsenum::inputLPFCutoff },
-        { preDelay, idsenum::preDelay },
-        { reverse, idsenum::reverse },
-        { size, idsenum::size },
-        
-        { earlyReflectionType, idsenum::earlyReflectionType },
-        { earlyReflectionLevel, idsenum::earlyReflectionLevel },
-        { earlyHPFCutoff, idsenum::earlyHPFCutoff },
-        { earlyLPFCutoff, idsenum::earlyLPFCutoff },
-        { earlyDiffusion, idsenum::earlyDiffusion },
-        
-        { lateDiffusion, idsenum::lateDiffusion },
-        { lateReflectionType, idsenum::lateReflectionType },
-        { lateReflectionLevel, idsenum::lateReflectionLevel },
-        { decay, idsenum::decay },
-        { lateHPFCutoff, idsenum::lateHPFCutoff },
-        { lateLPFCutoff, idsenum::lateLPFCutoff },
-        { fdnMixType, idsenum::fdnMixType },
-        
-        { modRate, idsenum::modRate },
-        { modDepth, idsenum::modDepth },
-        { modType, idsenum::modType },
-        
-        { shimmerLevel, idsenum::shimmerLevel },
-        { shimmerTransposition, idsenum::shimmerTransposition },
-        { shimmerDualVoice, idsenum::shimmerDualVoice },
-        
-        { interpolationType, idsenum::interpolationType },
-        { feedbackLimit, idsenum::feedbackLimit },
-        { monoLow, idsenum::monoLow },
-        { mix, idsenum::mix }
-    };
-
-    enum class paramType
-    {
-        FLOAT, INT, BOOLEAN, CHOICE
-    };
-
-    static const std::unordered_map< juce::String, paramType > id2ParamTypeEnum
-    {
-        { inputHPFCutoff, paramType::FLOAT },
-        { inputLPFCutoff, paramType::FLOAT },
-        { preDelay, paramType::FLOAT },
-        { reverse, paramType::BOOLEAN },
-        { size, paramType::FLOAT },
-        
-        { earlyReflectionType, paramType::CHOICE },
-        { earlyReflectionLevel, paramType::FLOAT },
-        { earlyDiffusion, paramType::FLOAT },
-        { earlyHPFCutoff, paramType::FLOAT },
-        { earlyLPFCutoff, paramType::FLOAT },
-        
-        { lateReflectionType, paramType::CHOICE },
-        { lateReflectionLevel, paramType::FLOAT },
-        { lateDiffusion, paramType::FLOAT },
-        { fdnMixType, paramType::CHOICE },
-        { decay, paramType::FLOAT },
-        { lateHPFCutoff, paramType::FLOAT },
-        { lateLPFCutoff, paramType::FLOAT },
-        
-        { modRate, paramType::FLOAT },
-        { modDepth, paramType::FLOAT },
-        { modType, paramType::CHOICE },
-        
-        { shimmerLevel, paramType::FLOAT },
-        { shimmerTransposition, paramType::FLOAT },
-        { shimmerDualVoice, paramType::BOOLEAN },
-        
-        { interpolationType, paramType::CHOICE },
-        { feedbackLimit, paramType::BOOLEAN },
-        { monoLow, paramType::BOOLEAN },
-        { mix, paramType::FLOAT },
-    };
+//    enum class idsenum
+//    {
+//        inputHPFCutoff,
+//        inputLPFCutoff,
+//        preDelay,
+//        reverse,
+//
+//        size,
+//
+//        earlyHPFCutoff,
+//        earlyLPFCutoff,
+//        earlyReflectionType,
+//        earlyReflectionLevel,
+//        earlyDiffusion,
+//
+//        lateDiffusion,
+//        lateReflectionType,
+//        lateReflectionLevel,
+//        lateHPFCutoff,
+//        lateLPFCutoff,
+//        fdnMixType,
+//        decay,
+//
+//        modRate,
+//        modDepth,
+//        modType,
+//
+//        shimmerLevel,
+//        shimmerTransposition,
+//        shimmerDualVoice,
+//
+//        interpolationType,
+//        feedbackLimit,
+//        monoLow,
+//        mix,
+//        dry,
+//        wet
+//    };
+//
+//    static const std::unordered_map< juce::String, idsenum > id2enum
+//    {
+//        { inputHPFCutoff, idsenum::inputHPFCutoff },
+//        { inputLPFCutoff, idsenum::inputLPFCutoff },
+//        { preDelay, idsenum::preDelay },
+//        { reverse, idsenum::reverse },
+//        { size, idsenum::size },
+//
+//        { earlyReflectionType, idsenum::earlyReflectionType },
+//        { earlyReflectionLevel, idsenum::earlyReflectionLevel },
+//        { earlyHPFCutoff, idsenum::earlyHPFCutoff },
+//        { earlyLPFCutoff, idsenum::earlyLPFCutoff },
+//        { earlyDiffusion, idsenum::earlyDiffusion },
+//
+//        { lateDiffusion, idsenum::lateDiffusion },
+//        { lateReflectionType, idsenum::lateReflectionType },
+//        { lateReflectionLevel, idsenum::lateReflectionLevel },
+//        { decay, idsenum::decay },
+//        { lateHPFCutoff, idsenum::lateHPFCutoff },
+//        { lateLPFCutoff, idsenum::lateLPFCutoff },
+//        { fdnMixType, idsenum::fdnMixType },
+//
+//        { modRate, idsenum::modRate },
+//        { modDepth, idsenum::modDepth },
+//        { modType, idsenum::modType },
+//
+//        { shimmerLevel, idsenum::shimmerLevel },
+//        { shimmerTransposition, idsenum::shimmerTransposition },
+//        { shimmerDualVoice, idsenum::shimmerDualVoice },
+//
+//        { interpolationType, idsenum::interpolationType },
+//        { feedbackLimit, idsenum::feedbackLimit },
+//        { monoLow, idsenum::monoLow },
+//        { mix, idsenum::mix }
+//    };
+//
+//    enum class paramType
+//    {
+//        FLOAT, INT, BOOLEAN, CHOICE
+//    };
+//
+//    static const std::unordered_map< juce::String, paramType > id2ParamTypeEnum
+//    {
+//        { inputHPFCutoff, paramType::FLOAT },
+//        { inputLPFCutoff, paramType::FLOAT },
+//        { preDelay, paramType::FLOAT },
+//        { reverse, paramType::BOOLEAN },
+//        { size, paramType::FLOAT },
+//        
+//        { earlyReflectionType, paramType::CHOICE },
+//        { earlyReflectionLevel, paramType::FLOAT },
+//        { earlyDiffusion, paramType::FLOAT },
+//        { earlyHPFCutoff, paramType::FLOAT },
+//        { earlyLPFCutoff, paramType::FLOAT },
+//        
+//        { lateReflectionType, paramType::CHOICE },
+//        { lateReflectionLevel, paramType::FLOAT },
+//        { lateDiffusion, paramType::FLOAT },
+//        { fdnMixType, paramType::CHOICE },
+//        { decay, paramType::FLOAT },
+//        { lateHPFCutoff, paramType::FLOAT },
+//        { lateLPFCutoff, paramType::FLOAT },
+//        
+//        { modRate, paramType::FLOAT },
+//        { modDepth, paramType::FLOAT },
+//        { modType, paramType::CHOICE },
+//        
+//        { shimmerLevel, paramType::FLOAT },
+//        { shimmerTransposition, paramType::FLOAT },
+//        { shimmerDualVoice, paramType::BOOLEAN },
+//        
+//        { interpolationType, paramType::CHOICE },
+//        { feedbackLimit, paramType::BOOLEAN },
+//        { monoLow, paramType::BOOLEAN },
+//        { mix, paramType::FLOAT },
+//    };
 
     static const juce::String et_rdd{ "rotDelDif" };
     static const juce::String et_mt{ "multitap" };
@@ -217,8 +219,16 @@ namespace parameterIDs
         { interpTypes.indexOf(interp_her), sjf::interpolation::interpolatorTypes::hermite }
     };
 
-    static const juce::StringArray modTypes = { "random", "sin" };
-    
+//    static const juce::String modRand{ "random" };
+//    static const juce::String modSin{ "sin" };
+//    static const juce::StringArray modTypes = { modRand, modSin };
+//    static const std::unordered_map< int, sjf::modulator::modType > modMap
+//    {
+//        { modTypes.indexOf(modRand), sjf::modulator::modType::random },
+//        { modTypes.indexOf(modSin), sjf::modulator::modType::sin }
+//    };
+
+
     static const juce::String mixNone{ "None" };
     static const juce::String mixHouseholder{ "Householder" };
     static const juce::String mixHadamard{ "Hadamard" };

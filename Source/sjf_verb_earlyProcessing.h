@@ -36,10 +36,10 @@ public:
     
     void setEarlyType( parameterIDs::earlyTypesEnum type );
     
+private:
     LSV m_LPFSmoother, m_HPFSmoother;
     earlyDSP::varHolder<Sample> m_varHolder { };
     
-private:
     void addParametersToHandler( juce::AudioProcessorValueTreeState& vts );
     
     void filterBlock( juce::AudioBuffer< Sample >& buffer, size_t blockSize );
@@ -53,7 +53,7 @@ private:
     std::unique_ptr< earlyDSP::mtWrapper<Sample, interpType> >          m_mt;
     std::unique_ptr< earlyDSP::mtsapWrapper<Sample, interpType> >       m_mtSap;
 
-    std::vector< sjf::filters::damper< Sample > >                                               m_earlyLPF, m_earlyHPF;
+    std::vector< sjf::filters::damper< Sample > >   m_earlyLPF, m_earlyHPF;
 
     size_t NCHANNELS{2};
     size_t rdd_NCHANNELS{8}, rdd_NSTAGES{5};
@@ -61,7 +61,6 @@ private:
     size_t sap_NSTAGES{8};
 
     parameterIDs::earlyTypesEnum m_earlyType{ parameterIDs::earlyTypesEnum::rotDelDif };
-    
     sjf::parameterHandler::paramHandlerVector m_paramHandler;
 };
 

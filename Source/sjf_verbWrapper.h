@@ -32,8 +32,7 @@ class sjf_verbWrapper
     using verbVariant = std::variant< verbNonePtr, verbLinPtr, verbCubPtr, verbPDPtr, verb4pPtr, verbGodPtr, verbHerPtr >;
     
 public:
-    sjf_verbWrapper( juce::AudioProcessorValueTreeState &vts ) :
-        m_vts(vts) , m_verb(std::make_unique<verbPD>(m_vts)) {}
+    sjf_verbWrapper( juce::AudioProcessorValueTreeState &vts ) : m_vts(vts) , m_verb(std::make_unique<verbPD>(m_vts)) {}
     ~sjf_verbWrapper(){ std::visit( verbReseter{}, m_verb ); }
     
     void initialise( double sampleRate, int samplesPerBlock, int nChannels )

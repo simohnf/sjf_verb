@@ -16,13 +16,13 @@ namespace earlyDSP
     template<typename T>
     using vect = std::vector<T>;
     template<typename T>
-    using twoDArray = vect< vect< T > >;
+    using twoDVect = vect< vect< T > >;
     template<typename Sample>
     using randArray = const sjf::ctr::rArray< Sample, 4096, UNIX_TIMESTAMP +'e'+'a'+'r'+'l'+'y' >;
     template <typename Sample>
     using phasor = sjf::oscillators::phasor< Sample >;
-    template <typename Sample>
-    using modulator = sjf::modulator::modVoice< Sample >;
+    template <typename Sample, sjf::modulator::modType modType = sjf::modulator::modType::random >
+    using modulator = sjf::modulator::modVoice< Sample, modType >;
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
@@ -49,7 +49,8 @@ namespace earlyDSP
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
+    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData,
+                sjf::modulator::modType modType = sjf::modulator::modType::random >
     struct rddWrapper
     {
         rddWrapper( const size_t nChannels, const size_t nStages, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), NMODCHANNELS(std::sqrt(NCHANNELS)), rdd(NCHANNELS,NSTAGES,NMODCHANNELS)
@@ -111,15 +112,16 @@ namespace earlyDSP
         
     private:
         const size_t NCHANNELS, NSTAGES, NMODCHANNELS;
-        twoDArray<Sample> m_DTs;
+        twoDVect<Sample> m_DTs;
         sjf::rev::rotDelDif< Sample, interpType > rdd;
-        twoDArray< modulator< Sample > > m_modulators;
+        twoDVect< modulator< Sample, modType > > m_modulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
+    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData,
+                sjf::modulator::modType modType = sjf::modulator::modType::random >
     struct mtWrapper
     {
         mtWrapper( const size_t nChannels, const size_t nTaps, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NTAPS(nTaps), MODMAX( std::sqrt(NTAPS) ), mt( NCHANNELS, NTAPS )
@@ -173,15 +175,16 @@ namespace earlyDSP
         }
     private:
         const size_t NCHANNELS, NTAPS, MODMAX;
-        twoDArray<Sample> m_DTs, m_gains;
+        twoDVect<Sample> m_DTs, m_gains;
         vect< sjf::rev::multiTap< Sample, interpType > > mt;
-        twoDArray< modulator< Sample > > m_modulators;
+        twoDVect< modulator< Sample, modType > > m_modulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
+    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData,
+            sjf::modulator::modType modType = sjf::modulator::modType::random >
     struct sapWrapper
     {
         sapWrapper( const size_t nChannels, const size_t nStages, const randArray<Sample>& rArr, const Sample sampleRate ) : NCHANNELS(nChannels), NSTAGES(nStages), sap( NCHANNELS, NSTAGES )
@@ -225,15 +228,16 @@ namespace earlyDSP
         }
     private:
         const size_t NCHANNELS, NSTAGES;
-        twoDArray<Sample> m_DTs;
+        twoDVect<Sample> m_DTs;
         vect< sjf::rev::seriesAllpass< Sample, interpType > > sap;
-        twoDArray< modulator< Sample > > m_modulators;
+        twoDVect< modulator< Sample, modType > > m_modulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
-    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData >
+    template< typename Sample, sjf::interpolation::interpolatorTypes interpType = sjf::interpolation::interpolatorTypes::pureData,
+                sjf::modulator::modType modType = sjf::modulator::modType::random >
     struct mtsapWrapper
     {
         mtsapWrapper( const size_t nChannels, const size_t nSAPStages, const size_t nTaps, const randArray<Sample>& rArr, const Sample sampleRate ) :
@@ -312,10 +316,10 @@ namespace earlyDSP
         }
     private:
         const size_t NCHANNELS, NSTAGES, NTAPS;
-        twoDArray<Sample> m_sapDTs, m_mtDTs, m_mtGains;
+        twoDVect<Sample> m_sapDTs, m_mtDTs, m_mtGains;
         vect< sjf::rev::seriesAllpass< Sample, interpType > > sap;
         vect< sjf::rev::multiTap< Sample, interpType > > mt;
-        twoDArray< modulator< Sample > > m_sapModulators;
+        twoDVect< modulator< Sample, modType > > m_sapModulators;
     };
     //======================//======================//======================//======================//======================
     //======================//======================//======================//======================//======================
